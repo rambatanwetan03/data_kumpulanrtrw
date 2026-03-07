@@ -11,13 +11,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
-            .print-only { display: block !important; }
-        }
-        .print-only { display: none; }
         .transition-all { transition: all 0.3s ease; }
         .loading-spinner {
             border: 3px solid rgba(0, 0, 0, 0.1);
@@ -31,148 +24,196 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-20">
+<body class="bg-gray-100 min-h-screen">
 
-    <header class="bg-blue-800 text-white p-6 shadow-lg no-print">
-        <div class="container mx-auto text-center">
-            <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wide">Pemerintah Desa Rambatan Wetan</h1>
-            <p class="text-sm md:text-lg opacity-90">Sistem Informasi Pendataan RT & RW (Terurut Otomatis)</p>
-        </div>
-    </header>
+    <!-- Screen Login -->
+    <div id="loginScreen" class="fixed inset-0 bg-blue-900 z-[300] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-blue-900 uppercase">Aplikasi Desa</h1>
+                <p class="text-gray-500 text-sm">Rambatan Wetan - Silahkan Login</p>
+            </div>
+            
+            <!-- Alert Login Salah -->
+            <div id="loginError" class="hidden mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm font-bold animate-bounce text-center rounded">
+                AYO.. Kamu Bukan Mas Ameth Ya...
+            </div>
 
-    <div class="container mx-auto px-4 mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-            <p class="text-xs text-gray-500 uppercase font-bold">Total Warga</p>
-            <h3 id="statTotal" class="text-2xl font-bold text-gray-800">0</h3>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
-            <p class="text-xs text-gray-500 uppercase font-bold">Total RT</p>
-            <h3 id="statRT" class="text-2xl font-bold text-gray-800">0</h3>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
-            <p class="text-xs text-gray-500 uppercase font-bold">Total RW</p>
-            <h3 id="statRW" class="text-2xl font-bold text-gray-800">0</h3>
-        </div>
-        <div id="currentTime" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 hidden md:block">
-            <p class="text-xs text-gray-500 uppercase font-bold">Tanggal</p>
-            <h3 id="dateNow" class="text-sm font-bold text-gray-800 mt-1">-</h3>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Username</label>
+                    <input type="text" id="loginUsername" required class="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all">Masuk Ke Sistem</button>
+                <div class="text-center">
+                    <button type="button" onclick="toggleResetMode(true)" class="text-xs text-blue-600 hover:underline">Lupa Password?</button>
+                </div>
+            </form>
+
+            <!-- Reset Password Mode -->
+            <div id="resetArea" class="hidden mt-6 pt-6 border-t">
+                <h3 class="text-sm font-bold text-gray-700 mb-2">Lupa Password?</h3>
+                <p class="text-xs text-gray-500 mb-4">Masukkan email verifikasi untuk mendapatkan bantuan pemulihan ke admin.</p>
+                <input type="email" id="resetEmail" placeholder="rambatanwetan03@gmail.com" class="w-full border rounded-lg p-2 text-sm mb-3 outline-none">
+                <button onclick="handleReset()" class="w-full bg-gray-800 text-white text-sm py-2 rounded-lg">Kirim Verifikasi</button>
+                <button onclick="toggleResetMode(false)" class="w-full text-xs text-gray-500 mt-2">Kembali ke Login</button>
+            </div>
         </div>
     </div>
 
-    <main class="container mx-auto p-4 md:p-8">
-        <div id="cloudStatus" class="mb-4 text-xs font-semibold flex items-center gap-2 no-print">
-            <div id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500"></div>
-            <span id="statusText" class="text-gray-600 italic">Menghubungkan ke cloud...</span>
+    <!-- Main Content -->
+    <div id="mainApp" class="hidden">
+        <header class="bg-blue-800 text-white p-6 shadow-lg no-print flex justify-between items-center">
+            <div class="container mx-auto flex justify-between items-center px-4">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">Desa Rambatan Wetan</h1>
+                    <p class="text-xs md:text-sm opacity-90">Sistem Pendataan Terurut Otomatis</p>
+                </div>
+                <button onclick="handleLogout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                    <span>Keluar</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="container mx-auto px-4 mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-xs text-gray-500 uppercase font-bold">Total Warga</p>
+                <h3 id="statTotal" class="text-2xl font-bold text-gray-800">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-xs text-gray-500 uppercase font-bold">Total RT</p>
+                <h3 id="statRT" class="text-2xl font-bold text-gray-800">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
+                <p class="text-xs text-gray-500 uppercase font-bold">Total RW</p>
+                <h3 id="statRW" class="text-2xl font-bold text-gray-800">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 hidden md:block">
+                <p class="text-xs text-gray-500 uppercase font-bold">Tanggal</p>
+                <h3 id="dateNow" class="text-sm font-bold text-gray-800 mt-1">-</h3>
+            </div>
         </div>
 
-        <div id="dataFormContainer" class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-4 border-blue-600 no-print transition-all">
-            <h2 id="formTitle" class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 flex justify-between">
-                <span>Form Input Data</span>
-                <button id="cancelEdit" onclick="resetForm()" class="hidden text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Batal Edit</button>
-            </h2>
-            <form id="dataForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="hidden" id="editId">
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nama Lengkap</label>
-                    <input type="text" id="nama" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Wilayah (RT/RW)</label>
-                    <div class="flex gap-2">
-                        <select id="tipeWilayah" class="border rounded-lg p-2 bg-white outline-none w-1/2">
-                            <option value="RT">RT</option>
-                            <option value="RW">RW</option>
-                        </select>
-                        <input type="number" id="noWilayah" placeholder="No" required class="border rounded-lg p-2 outline-none w-1/2">
+        <main class="container mx-auto p-4 md:p-8">
+            <div id="cloudStatus" class="mb-4 text-xs font-semibold flex items-center gap-2 no-print">
+                <div id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                <span id="statusText" class="text-gray-600 italic">Menghubungkan ke cloud...</span>
+            </div>
+
+            <div id="dataFormContainer" class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-4 border-blue-600 no-print transition-all">
+                <h2 id="formTitle" class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 flex justify-between">
+                    <span>Form Input Data</span>
+                    <button id="cancelEdit" onclick="resetForm()" class="hidden text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Batal Edit</button>
+                </h2>
+                <form id="dataForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="hidden" id="editId">
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nama Lengkap</label>
+                        <input type="text" id="nama" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Wilayah (RT/RW)</label>
+                        <div class="flex gap-2">
+                            <select id="tipeWilayah" class="border rounded-lg p-2 bg-white outline-none w-1/2">
+                                <option value="RT">RT</option>
+                                <option value="RW">RW</option>
+                            </select>
+                            <input type="number" id="noWilayah" placeholder="No" required class="border rounded-lg p-2 outline-none w-1/2">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nomor Rekening</label>
+                        <input type="text" id="rekening" required class="border rounded-lg p-2 outline-none">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nomor HP</label>
+                        <input type="text" id="hp" placeholder="08xxx" required class="border rounded-lg p-2 outline-none">
+                    </div>
+                    <div class="flex flex-col md:col-span-2">
+                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Alamat Lengkap</label>
+                        <input type="text" id="alamat" required class="border rounded-lg p-2 outline-none">
+                    </div>
+                    <div class="flex flex-col md:col-span-2">
+                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Foto Warga</label>
+                        <input type="file" id="foto" accept="image/*" class="text-sm">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md transition-all disabled:bg-gray-400">
+                            Simpan Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-4 no-print">
+                    <div class="flex items-center gap-4 w-full md:w-auto">
+                        <h2 class="text-xl font-bold text-gray-700">Daftar Warga</h2>
+                        <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama atau alamat..." class="border rounded-full px-4 py-1.5 text-sm focus:ring-2 focus:ring-blue-300 outline-none w-full md:w-64">
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="window.print()" class="bg-blue-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm transition-all">Print A4</button>
+                        <button onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-all">Excel</button>
+                        <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-all">PDF</button>
+                        <button onclick="askDelete('ALL')" class="bg-gray-200 hover:bg-red-100 text-gray-600 hover:text-red-600 px-4 py-2 rounded-lg text-sm transition-all font-medium">Hapus Semua</button>
                     </div>
                 </div>
 
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nomor Rekening</label>
-                    <input type="text" id="rekening" required class="border rounded-lg p-2 outline-none">
+                <div class="overflow-x-auto min-h-[200px] relative">
+                    <div id="tableLoading" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10 hidden">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-blue-50 text-blue-800 uppercase text-xs font-bold">
+                            <tr>
+                                <th class="px-4 py-3 border">No</th>
+                                <th class="px-4 py-3 border text-center">Foto</th>
+                                <th class="px-4 py-3 border">Nama</th>
+                                <th class="px-4 py-3 border text-center">Wilayah</th>
+                                <th class="px-4 py-3 border">Rekening</th>
+                                <th class="px-4 py-3 border">Alamat</th>
+                                <th class="px-4 py-3 border">HP</th>
+                                <th class="px-4 py-3 border text-center no-print">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="text-sm text-gray-700"></tbody>
+                    </table>
                 </div>
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nomor HP</label>
-                    <input type="text" id="hp" placeholder="08xxx" required class="border rounded-lg p-2 outline-none">
-                </div>
-                <div class="flex flex-col md:col-span-2">
-                    <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Alamat Lengkap</label>
-                    <input type="text" id="alamat" required class="border rounded-lg p-2 outline-none">
-                </div>
-                <div class="flex flex-col md:col-span-2">
-                    <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Foto Warga</label>
-                    <input type="file" id="foto" accept="image/*" class="text-sm">
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md transition-all disabled:bg-gray-400">
-                        Simpan Data
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="p-4 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-4 no-print">
-                <div class="flex items-center gap-4 w-full md:w-auto">
-                    <h2 class="text-xl font-bold text-gray-700">Daftar Warga</h2>
-                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama atau alamat..." class="border rounded-full px-4 py-1.5 text-sm focus:ring-2 focus:ring-blue-300 outline-none w-full md:w-64">
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="window.print()" class="bg-blue-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm transition-all">Print A4</button>
-                    <button onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-all">Excel</button>
-                    <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-all">PDF</button>
-                    <button onclick="askDelete('ALL')" class="bg-gray-200 hover:bg-red-100 text-gray-600 hover:text-red-600 px-4 py-2 rounded-lg text-sm transition-all font-medium">Hapus Semua</button>
+                <div id="emptyState" class="p-12 text-center text-gray-400 hidden">
+                    Tidak ada data ditemukan.
                 </div>
             </div>
+        </main>
+    </div>
 
-            <div class="print-only text-center mb-6 p-4 border-b-2 border-black">
-                <h1 class="text-2xl font-bold uppercase">Pemerintah Desa Rambatan Wetan</h1>
-                <h2 class="text-lg uppercase">Laporan Data Wilayah RT/RW</h2>
-                <p id="printDateBox" class="text-sm mt-2"></p>
-            </div>
-
-            <div class="overflow-x-auto min-h-[200px] relative">
-                <div id="tableLoading" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10 hidden">
-                    <div class="loading-spinner"></div>
-                </div>
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-blue-50 text-blue-800 uppercase text-xs font-bold">
-                        <tr>
-                            <th class="px-4 py-3 border">No</th>
-                            <th class="px-4 py-3 border text-center">Foto</th>
-                            <th class="px-4 py-3 border">Nama</th>
-                            <th class="px-4 py-3 border text-center">Wilayah</th>
-                            <th class="px-4 py-3 border">Rekening</th>
-                            <th class="px-4 py-3 border">Alamat</th>
-                            <th class="px-4 py-3 border">HP</th>
-                            <th class="px-4 py-3 border text-center no-print">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-sm text-gray-700"></tbody>
-                </table>
-            </div>
-            <div id="emptyState" class="p-12 text-center text-gray-400 hidden">
-                Tidak ada data ditemukan.
-            </div>
-        </div>
-    </main>
-
-    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[100] no-print p-4">
+    <!-- Modals & Toasts -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[500] no-print p-4">
         <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-2xl scale-95 transition-transform">
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi Tindakan</h3>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi</h3>
             <p id="deleteMsg" class="text-gray-600 mb-6">Apakah anda yakin?</p>
             <div class="flex justify-end gap-3">
                 <button onclick="closeModal()" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Batal</button>
-                <button id="confirmBtn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold shadow-lg">Ya, Lanjutkan</button>
+                <button id="confirmBtn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold shadow-lg">Hapus</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-opacity pointer-events-none z-[200]">
-        Data berhasil diperbarui!
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-opacity pointer-events-none z-[600]">
+        Data diperbarui!
     </div>
 
     <script type="module">
@@ -180,7 +221,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Konfigurasi
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -188,29 +228,66 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         let dataWarga = [];
-        let currentDeleteTarget = null;
         let currentUser = null;
+        let currentDeleteTarget = null;
 
-        // Helper Path Firestore (Rule 1)
+        // --- SISTEM LOGIN & AUTH ---
+
+        const checkLoginState = () => {
+            const isLogged = sessionStorage.getItem('isLoggedIn');
+            if (isLogged === 'true') {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+            }
+        };
+
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value;
+            const p = document.getElementById('loginPassword').value;
+            const errorMsg = document.getElementById('loginError');
+
+            if (u === 'Ameth' && p === 'Kliwon03') {
+                errorMsg.classList.add('hidden');
+                sessionStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                showToast("Selamat Datang, Ameth!");
+            } else {
+                errorMsg.classList.remove('hidden');
+                // Auto hide error after 5 seconds
+                setTimeout(() => errorMsg.classList.add('hidden'), 5000);
+            }
+        };
+
+        window.toggleResetMode = (show) => {
+            document.getElementById('resetArea').classList.toggle('hidden', !show);
+            document.getElementById('loginForm').classList.toggle('hidden', show);
+            document.getElementById('loginError').classList.add('hidden');
+        };
+
+        window.handleReset = () => {
+            const email = document.getElementById('resetEmail').value;
+            const target = "rambatanwetan03@gmail.com";
+            
+            if (email !== target) {
+                alert(`Email verifikasi tidak cocok. Silahkan hubungi admin di ${target}`);
+            } else {
+                alert(`Instruksi verifikasi telah dikirim ke ${target}. Silahkan cek kotak masuk Anda.`);
+                toggleResetMode(false);
+            }
+        };
+
+        window.handleLogout = () => {
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        };
+
+        // --- CORE DATABASE LOGIC ---
+
         const getPublicCollection = () => collection(db, 'artifacts', appId, 'public', 'data', 'warga');
         const getPublicDoc = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'warga', id.toString());
 
-        // UI Toast
-        const showToast = (msg) => {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
-        };
-
-        const setCloudStatus = (connected, message) => {
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            dot.className = `w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`;
-            text.innerText = message;
-        };
-
-        // Inisialisasi Auth (Rule 3)
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -218,55 +295,32 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (err) {
-                console.error("Auth failed:", err);
-                setCloudStatus(false, "Gagal terhubung.");
-            }
+            } catch (err) { console.error(err); }
         };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                setCloudStatus(true, "Cloud Terhubung");
+                document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-green-500";
+                document.getElementById('statusText').innerText = "Cloud Terhubung";
                 setupDataListener();
             }
         });
 
-        // Listener Data Real-time
         const setupDataListener = () => {
-            document.getElementById('tableLoading').classList.remove('hidden');
-            const q = getPublicCollection();
-            
-            onSnapshot(q, (snapshot) => {
+            onSnapshot(getPublicCollection(), (snapshot) => {
                 dataWarga = [];
-                snapshot.forEach((doc) => {
-                    dataWarga.push({ id: doc.id, ...doc.data() });
-                });
+                snapshot.forEach(doc => dataWarga.push({ id: doc.id, ...doc.data() }));
                 
-                // LOGIKA PENGURUTAN OTOMATIS (RW -> RT -> NAMA)
+                // Sort Logic: RW -> RT -> Nama
                 dataWarga.sort((a, b) => {
-                    // 1. Bandingkan RW (Ubah ke angka agar 10 tidak sebelum 2)
-                    const rwA = parseInt(a.tipeWilayah === 'RW' ? a.noWilayah : 999); 
+                    const rwA = parseInt(a.tipeWilayah === 'RW' ? a.noWilayah : 999);
                     const rwB = parseInt(b.tipeWilayah === 'RW' ? b.noWilayah : 999);
-                    
-                    // Jika RT, kita cari konteks RW-nya (dalam sistem ini dianggap flat, tapi kita urutkan tipe dulu)
-                    if (a.tipeWilayah !== b.tipeWilayah) {
-                        return a.tipeWilayah === 'RW' ? -1 : 1; // RW tampil lebih dulu dari RT
-                    }
-
-                    // 2. Bandingkan Nomor Wilayah
-                    if (parseInt(a.noWilayah) !== parseInt(b.noWilayah)) {
-                        return parseInt(a.noWilayah) - parseInt(b.noWilayah);
-                    }
-
-                    // 3. Jika Wilayah sama, urutkan berdasarkan Nama (A-Z)
+                    if (a.tipeWilayah !== b.tipeWilayah) return a.tipeWilayah === 'RW' ? -1 : 1;
+                    if (parseInt(a.noWilayah) !== parseInt(b.noWilayah)) return parseInt(a.noWilayah) - parseInt(b.noWilayah);
                     return a.nama.localeCompare(b.nama);
                 });
-                
                 renderTable();
-                document.getElementById('tableLoading').classList.add('hidden');
-            }, (error) => {
-                setCloudStatus(false, "Gagal sinkronisasi.");
             });
         };
 
@@ -275,34 +329,25 @@
             const search = document.getElementById('searchInput').value.toLowerCase();
             tbody.innerHTML = '';
 
-            const filteredData = dataWarga.filter(w => 
-                (w.nama || "").toLowerCase().includes(search) || 
-                (w.alamat || "").toLowerCase().includes(search)
-            );
+            const filtered = dataWarga.filter(w => (w.nama || "").toLowerCase().includes(search) || (w.alamat || "").toLowerCase().includes(search));
+            document.getElementById('emptyState').classList.toggle('hidden', filtered.length > 0);
 
-            if (filteredData.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
-            }
-
-            filteredData.forEach((w, index) => {
+            filtered.forEach((w, i) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 transition-colors border-b odd:bg-white even:bg-gray-50";
+                tr.className = "hover:bg-blue-50 border-b odd:bg-white even:bg-gray-50";
                 tr.innerHTML = `
-                    <td class="px-4 py-3 text-center border font-medium">${index + 1}</td>
+                    <td class="px-4 py-3 text-center border">${i + 1}</td>
                     <td class="px-4 py-3 border text-center">
-                        <img src="${w.foto || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-cover rounded-full border shadow-sm mx-auto">
+                        <img src="${w.foto || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-cover rounded-full border mx-auto">
                     </td>
-                    <td class="px-4 py-3 border font-semibold text-blue-900">${w.nama}</td>
-                    <td class="px-4 py-3 border text-center font-bold text-gray-600">${w.tipeWilayah} ${w.noWilayah}</td>
+                    <td class="px-4 py-3 border font-semibold">${w.nama}</td>
+                    <td class="px-4 py-3 border text-center font-bold text-blue-600">${w.tipeWilayah} ${w.noWilayah}</td>
                     <td class="px-4 py-3 border font-mono text-xs">${w.rekening}</td>
-                    <td class="px-4 py-3 border max-w-xs truncate">${w.alamat}</td>
-                    <td class="px-4 py-3 border text-xs font-bold">${w.hp}</td>
+                    <td class="px-4 py-3 border truncate max-w-[150px]">${w.alamat}</td>
+                    <td class="px-4 py-3 border text-xs">${w.hp}</td>
                     <td class="px-4 py-3 border flex gap-1 justify-center no-print">
-                        <button onclick="kirimWA('${w.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">WA</button>
-                        <button onclick="editData('${w.id}')" class="bg-yellow-400 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Edit</button>
-                        <button onclick="askDelete('${w.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Hapus</button>
+                        <button onclick="editData('${w.id}')" class="bg-yellow-400 text-white px-2 py-1 rounded text-[10px] font-bold">EDIT</button>
+                        <button onclick="askDelete('${w.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">HAPUS</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -313,55 +358,41 @@
             document.getElementById('statRW').innerText = dataWarga.filter(w => w.tipeWilayah === 'RW').length;
         };
 
-        document.getElementById('dataForm').addEventListener('submit', async function(e) {
+        document.getElementById('dataForm').onsubmit = async (e) => {
             e.preventDefault();
-            if (!currentUser) return showToast("Menunggu koneksi...");
+            const btn = document.getElementById('submitBtn');
+            const eid = document.getElementById('editId').value;
+            const fInput = document.getElementById('foto');
+            btn.disabled = true;
 
-            const submitBtn = document.getElementById('submitBtn');
-            const editId = document.getElementById('editId').value;
-            const fotoInput = document.getElementById('foto');
-
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Menyimpan...";
-
-            const saveProcess = async (imgBase64 = null) => {
-                const id = editId || Date.now().toString();
-                const existing = editId ? dataWarga.find(x => x.id === editId) : null;
-
-                const citizen = {
+            const save = async (base64 = null) => {
+                const id = eid || Date.now().toString();
+                const exist = eid ? dataWarga.find(x => x.id === eid) : null;
+                const docData = {
                     nama: document.getElementById('nama').value,
                     tipeWilayah: document.getElementById('tipeWilayah').value,
                     noWilayah: document.getElementById('noWilayah').value,
                     rekening: document.getElementById('rekening').value,
                     hp: document.getElementById('hp').value,
                     alamat: document.getElementById('alamat').value,
-                    foto: imgBase64 || (existing ? existing.foto : 'https://via.placeholder.com/50'),
+                    foto: base64 || (exist ? exist.foto : null),
                     updatedAt: serverTimestamp()
                 };
-
-                try {
-                    await setDoc(getPublicDoc(id), citizen);
-                    showToast("Data Berhasil Disimpan & Diurutkan!");
-                    resetForm();
-                } catch (err) {
-                    showToast("Gagal menyimpan.");
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Simpan Data";
-                }
+                await setDoc(getPublicDoc(id), docData);
+                showToast("Data Berhasil Disimpan!");
+                resetForm();
+                btn.disabled = false;
             };
 
-            if (fotoInput.files && fotoInput.files[0]) {
+            if (fInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (ev) => saveProcess(ev.target.result);
-                reader.readAsDataURL(fotoInput.files[0]);
-            } else {
-                saveProcess();
-            }
-        });
+                reader.onload = (ev) => save(ev.target.result);
+                reader.readAsDataURL(fInput.files[0]);
+            } else { save(); }
+        };
 
         window.editData = (id) => {
-            const w = dataWarga.find(item => item.id === id);
+            const w = dataWarga.find(x => x.id === id);
             if (!w) return;
             document.getElementById('editId').value = w.id;
             document.getElementById('nama').value = w.nama;
@@ -370,11 +401,9 @@
             document.getElementById('rekening').value = w.rekening;
             document.getElementById('hp').value = w.hp;
             document.getElementById('alamat').value = w.alamat;
-            
             document.getElementById('submitBtn').innerText = "Update Data";
-            document.getElementById('formTitle').children[0].innerText = "Mode Edit";
             document.getElementById('cancelEdit').classList.remove('hidden');
-            window.scrollTo(0, 0);
+            window.scrollTo({top: 0, behavior: 'smooth'});
         };
 
         window.resetForm = () => {
@@ -384,59 +413,51 @@
             document.getElementById('cancelEdit').classList.add('hidden');
         };
 
-        window.askDelete = (target) => {
-            currentDeleteTarget = target;
-            document.getElementById('deleteMsg').innerText = target === 'ALL' ? "Hapus SEMUA data?" : "Hapus warga ini?";
+        window.askDelete = (t) => {
+            currentDeleteTarget = t;
             document.getElementById('deleteModal').classList.remove('hidden');
         };
 
         window.closeModal = () => document.getElementById('deleteModal').classList.add('hidden');
 
-        document.getElementById('confirmBtn').onclick = async function() {
-            try {
-                if (currentDeleteTarget === 'ALL') {
-                    const querySnapshot = await getDocs(getPublicCollection());
-                    querySnapshot.forEach(async (d) => await deleteDoc(getPublicDoc(d.id)));
-                } else {
-                    await deleteDoc(getPublicDoc(currentDeleteTarget));
-                }
-                showToast("Data terhapus.");
-            } catch (err) {
-                showToast("Gagal menghapus.");
+        document.getElementById('confirmBtn').onclick = async () => {
+            if (currentDeleteTarget === 'ALL') {
+                const snap = await getDocs(getPublicCollection());
+                snap.forEach(async d => await deleteDoc(getPublicDoc(d.id)));
+            } else {
+                await deleteDoc(getPublicDoc(currentDeleteTarget));
             }
             closeModal();
+            showToast("Data Dihapus");
         };
 
-        window.kirimWA = (id) => {
-            const w = dataWarga.find(item => item.id === id);
-            let phone = w.hp.startsWith('0') ? '62' + w.hp.slice(1) : w.hp;
-            const msg = `*DATA WARGA RAMBATAN WETAN*%0A%0ANama: ${w.nama}%0AWilayah: ${w.tipeWilayah} ${w.noWilayah}%0AAlamat: ${w.alamat}`;
-            window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+        const showToast = (m) => {
+            const t = document.getElementById('toast');
+            t.innerText = m;
+            t.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 3000);
         };
 
         window.exportExcel = () => {
-            const ws = XLSX.utils.json_to_sheet(dataWarga.map((w, i) => ({
-                "No": i+1, "Nama": w.nama, "Wilayah": `${w.tipeWilayah} ${w.noWilayah}`, "Alamat": w.alamat, "HP": w.hp
-            })));
+            const ws = XLSX.utils.json_to_sheet(dataWarga.map((w, i) => ({ No: i+1, Nama: w.nama, Wilayah: `${w.tipeWilayah} ${w.noWilayah}`, Rekening: w.rekening, HP: w.hp })));
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Data");
-            XLSX.writeFile(wb, "Data_Warga_Rambatan_Wetan.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Warga");
+            XLSX.writeFile(wb, "Data_Warga_RambatanWetan.xlsx");
         };
 
         window.exportPDF = () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("LAPORAN DATA WARGA", 105, 15, { align: 'center' });
+            doc.text("DATA WARGA RAMBATAN WETAN", 10, 10);
             doc.autoTable({
-                head: [['No', 'Nama', 'Wilayah', 'Alamat', 'HP']],
-                body: dataWarga.map((w, i) => [i+1, w.nama, `${w.tipeWilayah} ${w.noWilayah}`, w.alamat, w.hp]),
-                startY: 25
+                head: [['No', 'Nama', 'Wilayah', 'Rekening', 'HP']],
+                body: dataWarga.map((w, i) => [i+1, w.nama, `${w.tipeWilayah} ${w.noWilayah}`, w.rekening, w.hp])
             });
-            doc.save("Laporan_Warga.pdf");
+            doc.save("Data_Warga.pdf");
         };
 
-        const now = new Date();
-        document.getElementById('dateNow').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('dateNow').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        checkLoginState();
         initAuth();
     </script>
 </body>
