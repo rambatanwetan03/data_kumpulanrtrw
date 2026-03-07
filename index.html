@@ -19,6 +19,18 @@
         }
         .print-only { display: none; }
         .transition-all { transition: all 0.3s ease; }
+        .loading-spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #1e40af;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen pb-20">
@@ -26,7 +38,7 @@
     <header class="bg-blue-800 text-white p-6 shadow-lg no-print">
         <div class="container mx-auto text-center">
             <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wide">Pemerintah Desa Rambatan Wetan</h1>
-            <p class="text-sm md:text-lg opacity-90">Sistem Informasi Pendataan RT & RW</p>
+            <p class="text-sm md:text-lg opacity-90">Sistem Informasi Pendataan RT & RW (Terurut Otomatis)</p>
         </div>
     </header>
 
@@ -50,6 +62,11 @@
     </div>
 
     <main class="container mx-auto p-4 md:p-8">
+        <div id="cloudStatus" class="mb-4 text-xs font-semibold flex items-center gap-2 no-print">
+            <div id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500"></div>
+            <span id="statusText" class="text-gray-600 italic">Menghubungkan ke cloud...</span>
+        </div>
+
         <div id="dataFormContainer" class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-4 border-blue-600 no-print transition-all">
             <h2 id="formTitle" class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 flex justify-between">
                 <span>Form Input Data</span>
@@ -90,7 +107,7 @@
                     <input type="file" id="foto" accept="image/*" class="text-sm">
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md transition-all">
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md transition-all disabled:bg-gray-400">
                         Simpan Data
                     </button>
                 </div>
@@ -117,7 +134,10 @@
                 <p id="printDateBox" class="text-sm mt-2"></p>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto min-h-[200px] relative">
+                <div id="tableLoading" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10 hidden">
+                    <div class="loading-spinner"></div>
+                </div>
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-blue-50 text-blue-800 uppercase text-xs font-bold">
                         <tr>
@@ -155,80 +175,109 @@
         Data berhasil diperbarui!
     </div>
 
-    <script>
-        let dataWarga = JSON.parse(localStorage.getItem('data_warga_rambatan')) || [];
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Konfigurasi
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let dataWarga = [];
         let currentDeleteTarget = null;
-        let isEditing = false;
+        let currentUser = null;
 
-        const form = document.getElementById('dataForm');
-        
-        // Update Tanggal
-        const now = new Date();
-        const tglStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('dateNow').innerText = tglStr;
-        document.getElementById('printDateBox').innerText = "Dicetak pada: " + tglStr;
+        // Helper Path Firestore (Rule 1)
+        const getPublicCollection = () => collection(db, 'artifacts', appId, 'public', 'data', 'warga');
+        const getPublicDoc = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'warga', id.toString());
 
-        function showToast(msg) {
+        // UI Toast
+        const showToast = (msg) => {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
             toast.classList.replace('opacity-0', 'opacity-100');
             setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 3000);
-        }
+        };
 
-        function updateStats() {
-            document.getElementById('statTotal').innerText = dataWarga.length;
-            document.getElementById('statRT').innerText = dataWarga.filter(w => w.tipeWilayah === 'RT').length;
-            document.getElementById('statRW').innerText = dataWarga.filter(w => w.tipeWilayah === 'RW').length;
-        }
+        const setCloudStatus = (connected, message) => {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            dot.className = `w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`;
+            text.innerText = message;
+        };
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const fotoInput = document.getElementById('foto');
-            const editId = document.getElementById('editId').value;
-
-            const processData = (imgBase64 = null) => {
-                const citizen = {
-                    id: editId ? parseInt(editId) : Date.now(),
-                    nama: document.getElementById('nama').value,
-                    tipeWilayah: document.getElementById('tipeWilayah').value,
-                    noWilayah: document.getElementById('noWilayah').value,
-                    rekening: document.getElementById('rekening').value,
-                    hp: document.getElementById('hp').value,
-                    alamat: document.getElementById('alamat').value,
-                    foto: imgBase64 || (editId ? dataWarga.find(x => x.id == editId).foto : 'https://via.placeholder.com/50')
-                };
-
-                if (editId) {
-                    const idx = dataWarga.findIndex(item => item.id == editId);
-                    dataWarga[idx] = citizen;
-                    showToast("Data berhasil diperbarui!");
+        // Inisialisasi Auth (Rule 3)
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    dataWarga.push(citizen);
-                    showToast("Data berhasil disimpan!");
+                    await signInAnonymously(auth);
                 }
+            } catch (err) {
+                console.error("Auth failed:", err);
+                setCloudStatus(false, "Gagal terhubung.");
+            }
+        };
 
-                localStorage.setItem('data_warga_rambatan', JSON.stringify(dataWarga));
-                resetForm();
-                renderTable();
-            };
-
-            if (fotoInput.files && fotoInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (ev) => processData(ev.target.result);
-                reader.readAsDataURL(fotoInput.files[0]);
-            } else {
-                processData();
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                setCloudStatus(true, "Cloud Terhubung");
+                setupDataListener();
             }
         });
 
-        function renderTable() {
+        // Listener Data Real-time
+        const setupDataListener = () => {
+            document.getElementById('tableLoading').classList.remove('hidden');
+            const q = getPublicCollection();
+            
+            onSnapshot(q, (snapshot) => {
+                dataWarga = [];
+                snapshot.forEach((doc) => {
+                    dataWarga.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // LOGIKA PENGURUTAN OTOMATIS (RW -> RT -> NAMA)
+                dataWarga.sort((a, b) => {
+                    // 1. Bandingkan RW (Ubah ke angka agar 10 tidak sebelum 2)
+                    const rwA = parseInt(a.tipeWilayah === 'RW' ? a.noWilayah : 999); 
+                    const rwB = parseInt(b.tipeWilayah === 'RW' ? b.noWilayah : 999);
+                    
+                    // Jika RT, kita cari konteks RW-nya (dalam sistem ini dianggap flat, tapi kita urutkan tipe dulu)
+                    if (a.tipeWilayah !== b.tipeWilayah) {
+                        return a.tipeWilayah === 'RW' ? -1 : 1; // RW tampil lebih dulu dari RT
+                    }
+
+                    // 2. Bandingkan Nomor Wilayah
+                    if (parseInt(a.noWilayah) !== parseInt(b.noWilayah)) {
+                        return parseInt(a.noWilayah) - parseInt(b.noWilayah);
+                    }
+
+                    // 3. Jika Wilayah sama, urutkan berdasarkan Nama (A-Z)
+                    return a.nama.localeCompare(b.nama);
+                });
+                
+                renderTable();
+                document.getElementById('tableLoading').classList.add('hidden');
+            }, (error) => {
+                setCloudStatus(false, "Gagal sinkronisasi.");
+            });
+        };
+
+        window.renderTable = () => {
             const tbody = document.getElementById('tableBody');
             const search = document.getElementById('searchInput').value.toLowerCase();
             tbody.innerHTML = '';
 
             const filteredData = dataWarga.filter(w => 
-                w.nama.toLowerCase().includes(search) || 
-                w.alamat.toLowerCase().includes(search)
+                (w.nama || "").toLowerCase().includes(search) || 
+                (w.alamat || "").toLowerCase().includes(search)
             );
 
             if (filteredData.length === 0) {
@@ -243,7 +292,7 @@
                 tr.innerHTML = `
                     <td class="px-4 py-3 text-center border font-medium">${index + 1}</td>
                     <td class="px-4 py-3 border text-center">
-                        <img src="${w.foto}" class="w-10 h-10 object-cover rounded-full border shadow-sm mx-auto">
+                        <img src="${w.foto || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-cover rounded-full border shadow-sm mx-auto">
                     </td>
                     <td class="px-4 py-3 border font-semibold text-blue-900">${w.nama}</td>
                     <td class="px-4 py-3 border text-center font-bold text-gray-600">${w.tipeWilayah} ${w.noWilayah}</td>
@@ -251,18 +300,69 @@
                     <td class="px-4 py-3 border max-w-xs truncate">${w.alamat}</td>
                     <td class="px-4 py-3 border text-xs font-bold">${w.hp}</td>
                     <td class="px-4 py-3 border flex gap-1 justify-center no-print">
-                        <button onclick="kirimWA(${w.id})" class="bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">WA</button>
-                        <button onclick="editData(${w.id})" class="bg-yellow-400 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Edit</button>
-                        <button onclick="askDelete(${w.id})" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Hapus</button>
+                        <button onclick="kirimWA('${w.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">WA</button>
+                        <button onclick="editData('${w.id}')" class="bg-yellow-400 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Edit</button>
+                        <button onclick="askDelete('${w.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Hapus</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
-            updateStats();
-        }
 
-        function editData(id) {
+            document.getElementById('statTotal').innerText = dataWarga.length;
+            document.getElementById('statRT').innerText = dataWarga.filter(w => w.tipeWilayah === 'RT').length;
+            document.getElementById('statRW').innerText = dataWarga.filter(w => w.tipeWilayah === 'RW').length;
+        };
+
+        document.getElementById('dataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!currentUser) return showToast("Menunggu koneksi...");
+
+            const submitBtn = document.getElementById('submitBtn');
+            const editId = document.getElementById('editId').value;
+            const fotoInput = document.getElementById('foto');
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Menyimpan...";
+
+            const saveProcess = async (imgBase64 = null) => {
+                const id = editId || Date.now().toString();
+                const existing = editId ? dataWarga.find(x => x.id === editId) : null;
+
+                const citizen = {
+                    nama: document.getElementById('nama').value,
+                    tipeWilayah: document.getElementById('tipeWilayah').value,
+                    noWilayah: document.getElementById('noWilayah').value,
+                    rekening: document.getElementById('rekening').value,
+                    hp: document.getElementById('hp').value,
+                    alamat: document.getElementById('alamat').value,
+                    foto: imgBase64 || (existing ? existing.foto : 'https://via.placeholder.com/50'),
+                    updatedAt: serverTimestamp()
+                };
+
+                try {
+                    await setDoc(getPublicDoc(id), citizen);
+                    showToast("Data Berhasil Disimpan & Diurutkan!");
+                    resetForm();
+                } catch (err) {
+                    showToast("Gagal menyimpan.");
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Simpan Data";
+                }
+            };
+
+            if (fotoInput.files && fotoInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (ev) => saveProcess(ev.target.result);
+                reader.readAsDataURL(fotoInput.files[0]);
+            } else {
+                saveProcess();
+            }
+        });
+
+        window.editData = (id) => {
             const w = dataWarga.find(item => item.id === id);
+            if (!w) return;
             document.getElementById('editId').value = w.id;
             document.getElementById('nama').value = w.nama;
             document.getElementById('tipeWilayah').value = w.tipeWilayah;
@@ -271,74 +371,73 @@
             document.getElementById('hp').value = w.hp;
             document.getElementById('alamat').value = w.alamat;
             
-            document.getElementById('submitBtn').innerText = "Update Data Warga";
-            document.getElementById('formTitle').children[0].innerText = "Mode Edit Data";
+            document.getElementById('submitBtn').innerText = "Update Data";
+            document.getElementById('formTitle').children[0].innerText = "Mode Edit";
             document.getElementById('cancelEdit').classList.remove('hidden');
-            document.getElementById('dataFormContainer').classList.replace('border-blue-600', 'border-yellow-400');
             window.scrollTo(0, 0);
-        }
-
-        function resetForm() {
-            form.reset();
-            document.getElementById('editId').value = '';
-            document.getElementById('submitBtn').innerText = "Simpan Data";
-            document.getElementById('formTitle').children[0].innerText = "Form Input Data";
-            document.getElementById('cancelEdit').classList.add('hidden');
-            document.getElementById('dataFormContainer').classList.replace('border-yellow-400', 'border-blue-600');
-        }
-
-        function askDelete(target) {
-            currentDeleteTarget = target;
-            document.getElementById('deleteMsg').innerText = target === 'ALL' ? "Hapus SELURUH data warga? Data tidak bisa dikembalikan." : "Hapus data warga ini?";
-            document.getElementById('deleteModal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-
-        document.getElementById('confirmBtn').onclick = function() {
-            if (currentDeleteTarget === 'ALL') {
-                dataWarga = [];
-            } else {
-                dataWarga = dataWarga.filter(i => i.id !== currentDeleteTarget);
-            }
-            localStorage.setItem('data_warga_rambatan', JSON.stringify(dataWarga));
-            renderTable();
-            closeModal();
-            showToast("Data dihapus!");
         };
 
-        function kirimWA(id) {
+        window.resetForm = () => {
+            document.getElementById('dataForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('submitBtn').innerText = "Simpan Data";
+            document.getElementById('cancelEdit').classList.add('hidden');
+        };
+
+        window.askDelete = (target) => {
+            currentDeleteTarget = target;
+            document.getElementById('deleteMsg').innerText = target === 'ALL' ? "Hapus SEMUA data?" : "Hapus warga ini?";
+            document.getElementById('deleteModal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => document.getElementById('deleteModal').classList.add('hidden');
+
+        document.getElementById('confirmBtn').onclick = async function() {
+            try {
+                if (currentDeleteTarget === 'ALL') {
+                    const querySnapshot = await getDocs(getPublicCollection());
+                    querySnapshot.forEach(async (d) => await deleteDoc(getPublicDoc(d.id)));
+                } else {
+                    await deleteDoc(getPublicDoc(currentDeleteTarget));
+                }
+                showToast("Data terhapus.");
+            } catch (err) {
+                showToast("Gagal menghapus.");
+            }
+            closeModal();
+        };
+
+        window.kirimWA = (id) => {
             const w = dataWarga.find(item => item.id === id);
             let phone = w.hp.startsWith('0') ? '62' + w.hp.slice(1) : w.hp;
-            const msg = `*DATA WARGA RAMBATAN WETAN*%0A%0ANama: ${w.nama}%0AWilayah: ${w.tipeWilayah} ${w.noWilayah}%0ARekening: ${w.rekening}%0AAlamat: ${w.alamat}`;
+            const msg = `*DATA WARGA RAMBATAN WETAN*%0A%0ANama: ${w.nama}%0AWilayah: ${w.tipeWilayah} ${w.noWilayah}%0AAlamat: ${w.alamat}`;
             window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-        }
+        };
 
-        function exportExcel() {
-            if (!dataWarga.length) return alert("Data kosong");
+        window.exportExcel = () => {
             const ws = XLSX.utils.json_to_sheet(dataWarga.map((w, i) => ({
-                "No": i+1, "Nama": w.nama, "Wilayah": `${w.tipeWilayah} ${w.noWilayah}`, "Rekening": w.rekening, "Alamat": w.alamat, "HP": w.hp
+                "No": i+1, "Nama": w.nama, "Wilayah": `${w.tipeWilayah} ${w.noWilayah}`, "Alamat": w.alamat, "HP": w.hp
             })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Data");
             XLSX.writeFile(wb, "Data_Warga_Rambatan_Wetan.xlsx");
-        }
+        };
 
-        function exportPDF() {
+        window.exportPDF = () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("LAPORAN DATA WARGA RAMBATAN WETAN", 105, 15, { align: 'center' });
+            doc.text("LAPORAN DATA WARGA", 105, 15, { align: 'center' });
             doc.autoTable({
-                head: [['No', 'Nama', 'Wilayah', 'Rekening', 'Alamat', 'HP']],
-                body: dataWarga.map((w, i) => [i+1, w.nama, `${w.tipeWilayah} ${w.noWilayah}`, w.rekening, w.alamat, w.hp]),
+                head: [['No', 'Nama', 'Wilayah', 'Alamat', 'HP']],
+                body: dataWarga.map((w, i) => [i+1, w.nama, `${w.tipeWilayah} ${w.noWilayah}`, w.alamat, w.hp]),
                 startY: 25
             });
             doc.save("Laporan_Warga.pdf");
-        }
+        };
 
-        renderTable();
+        const now = new Date();
+        document.getElementById('dateNow').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        initAuth();
     </script>
 </body>
 </html>
