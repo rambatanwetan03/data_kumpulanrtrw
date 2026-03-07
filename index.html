@@ -11,7 +11,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
-        .transition-all { transition: all 0.3s ease; }
         .loading-spinner {
             border: 3px solid rgba(0, 0, 0, 0.1);
             width: 24px;
@@ -27,9 +26,7 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white; }
-            .print-only { display: block !important; }
         }
-        .print-only { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -37,317 +34,384 @@
     <!-- Screen Login -->
     <div id="loginScreen" class="fixed inset-0 bg-blue-900 z-[300] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8">
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <h1 class="text-2xl font-bold text-blue-900 uppercase">Aplikasi Desa</h1>
-                <p class="text-gray-500 text-sm">Rambatan Wetan - Silahkan Login</p>
+                <p class="text-gray-500 text-sm">Rambatan Wetan - Akses Terbatas</p>
             </div>
             
-            <!-- Alert Login Salah -->
-            <div id="loginError" class="hidden mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm font-bold animate-bounce text-center rounded">
+            <div id="loginError" class="hidden mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm font-bold animate-pulse text-center rounded">
                 AYO.. Kamu Bukan Mas Ameth Ya...
             </div>
 
             <form id="loginForm" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Username</label>
-                    <input type="text" id="loginUsername" required class="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="loginUsername" required class="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Password</label>
-                    <input type="password" id="loginPassword" required class="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="relative">
+                        <input type="password" id="loginPassword" required class="w-full border rounded-lg p-3 pr-12 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 focus:outline-none">
+                            <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all">Masuk Ke Sistem</button>
+                <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all active:scale-95">
+                    Masuk Sekarang
+                </button>
                 <div class="text-center">
                     <button type="button" onclick="toggleResetMode(true)" class="text-xs text-blue-600 hover:underline">Lupa Password?</button>
                 </div>
             </form>
 
-            <!-- Reset Password Mode -->
             <div id="resetArea" class="hidden mt-6 pt-6 border-t">
-                <h3 class="text-sm font-bold text-gray-700 mb-2">Lupa Password?</h3>
-                <p class="text-xs text-gray-500 mb-4">Masukkan email verifikasi untuk mendapatkan bantuan pemulihan ke admin.</p>
-                <input type="email" id="resetEmail" placeholder="rambatanwetan03@gmail.com" class="w-full border rounded-lg p-2 text-sm mb-3 outline-none">
-                <button onclick="handleReset()" class="w-full bg-gray-800 text-white text-sm py-2 rounded-lg">Kirim Verifikasi</button>
-                <button onclick="toggleResetMode(false)" class="w-full text-xs text-gray-500 mt-2">Kembali ke Login</button>
+                <h3 class="text-sm font-bold text-gray-700 mb-2 font-bold">Verifikasi Email</h3>
+                <p class="text-xs text-gray-500 mb-4">Masukkan email terdaftar untuk pemulihan.</p>
+                <input type="email" id="resetEmail" placeholder="rambatanwetan03@gmail.com" class="w-full border rounded-lg p-3 text-sm mb-3 outline-none bg-gray-50">
+                <button onclick="handleReset()" class="w-full bg-gray-800 text-white text-sm py-2.5 rounded-lg font-bold">Kirim Instruksi</button>
+                <button onclick="toggleResetMode(false)" class="w-full text-xs text-gray-500 mt-4">Kembali ke Login</button>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main App Content -->
     <div id="mainApp" class="hidden">
-        <header class="bg-blue-800 text-white p-6 shadow-lg no-print flex justify-between items-center">
-            <div class="container mx-auto flex justify-between items-center px-4">
+        <header class="bg-blue-800 text-white p-4 shadow-lg no-print">
+            <div class="container mx-auto flex justify-between items-center">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">Desa Rambatan Wetan</h1>
-                    <p class="text-xs md:text-sm opacity-90">Sistem Pendataan Terurut Otomatis</p>
+                    <h1 class="text-lg md:text-xl font-bold uppercase tracking-wide">Desa Rambatan Wetan</h1>
+                    <p class="text-[10px] opacity-80 uppercase tracking-widest">Sistem Administrasi Warga</p>
                 </div>
-                <button onclick="handleLogout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
-                    <span>Keluar</span>
-                </button>
+                <div class="flex items-center gap-4">
+                    <span class="hidden md:inline text-xs font-semibold bg-blue-700 px-3 py-1 rounded-full">Admin: Ameth</span>
+                    <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-md">
+                        KELUAR
+                    </button>
+                </div>
             </div>
         </header>
 
+        <!-- Stats Section -->
         <div class="container mx-auto px-4 mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total Warga</p>
-                <h3 id="statTotal" class="text-2xl font-bold text-gray-800">0</h3>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-500">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Total Warga</p>
+                <h3 id="statTotal" class="text-2xl font-black text-gray-800">0</h3>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total RT</p>
-                <h3 id="statRT" class="text-2xl font-bold text-gray-800">0</h3>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-green-500">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Total RT</p>
+                <h3 id="statRT" class="text-2xl font-black text-gray-800">0</h3>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total RW</p>
-                <h3 id="statRW" class="text-2xl font-bold text-gray-800">0</h3>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-purple-500">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Total RW</p>
+                <h3 id="statRW" class="text-2xl font-black text-gray-800">0</h3>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500 hidden md:block">
-                <p class="text-xs text-gray-500 uppercase font-bold">Tanggal</p>
-                <h3 id="dateNow" class="text-sm font-bold text-gray-800 mt-1">-</h3>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-orange-500">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status Cloud</p>
+                <div class="flex items-center gap-2 mt-2">
+                    <div id="statusDot" class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span id="statusText" class="text-[10px] font-bold text-gray-600 uppercase">Menghubungkan...</span>
+                </div>
             </div>
         </div>
 
         <main class="container mx-auto p-4 md:p-8">
-            <div id="cloudStatus" class="mb-4 text-xs font-semibold flex items-center gap-2 no-print">
-                <div id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500"></div>
-                <span id="statusText" class="text-gray-600 italic">Menghubungkan ke cloud...</span>
-            </div>
-
+            <!-- Form Input -->
             <div id="dataFormContainer" class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-4 border-blue-600 no-print transition-all">
-                <h2 id="formTitle" class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 flex justify-between">
-                    <span>Form Input Data</span>
-                    <button id="cancelEdit" onclick="resetForm()" class="hidden text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Batal Edit</button>
-                </h2>
-                <form id="dataForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold text-gray-700 uppercase tracking-tight">Input Data Warga</h2>
+                    <button id="cancelEdit" onclick="resetForm()" class="hidden text-xs bg-red-500 text-white px-3 py-1 rounded-full font-bold uppercase">Batal Edit</button>
+                </div>
+                <form id="dataForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <input type="hidden" id="editId">
                     <div class="flex flex-col">
-                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nama Lengkap</label>
-                        <input type="text" id="nama" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="text-[10px] font-black text-gray-500 mb-1 uppercase tracking-widest">Nama Lengkap</label>
+                        <input type="text" id="nama" required class="border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-medium">
                     </div>
                     
                     <div class="flex flex-col">
-                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Wilayah (RT/RW)</label>
+                        <label class="text-[10px] font-black text-gray-500 mb-1 uppercase tracking-widest">Wilayah</label>
                         <div class="flex gap-2">
-                            <select id="tipeWilayah" class="border rounded-lg p-2 bg-white outline-none w-1/2">
-                                <option value="RT">RT</option>
-                                <option value="RW">RW</option>
+                            <select id="tipeWilayah" class="border rounded-lg p-2.5 bg-gray-50 outline-none w-2/3 font-bold">
+                                <option value="RT">RT (Rukun Tetangga)</option>
+                                <option value="RW">RW (Rukun Warga)</option>
                             </select>
-                            <input type="number" id="noWilayah" placeholder="No" required class="border rounded-lg p-2 outline-none w-1/2">
+                            <input type="number" id="noWilayah" placeholder="No" required class="border rounded-lg p-2.5 outline-none w-1/3 bg-gray-50 font-bold">
                         </div>
                     </div>
 
                     <div class="flex flex-col">
-                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nomor Rekening</label>
-                        <input type="text" id="rekening" required class="border rounded-lg p-2 outline-none">
+                        <label class="text-[10px] font-black text-gray-500 mb-1 uppercase tracking-widest">No. Rekening</label>
+                        <input type="text" id="rekening" required class="border rounded-lg p-2.5 outline-none bg-gray-50 font-mono">
                     </div>
+
                     <div class="flex flex-col">
-                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Nomor HP</label>
-                        <input type="text" id="hp" placeholder="08xxx" required class="border rounded-lg p-2 outline-none">
+                        <label class="text-[10px] font-black text-gray-500 mb-1 uppercase tracking-widest">No. HP (WhatsApp)</label>
+                        <input type="text" id="hp" placeholder="08..." required class="border rounded-lg p-2.5 outline-none bg-gray-50">
                     </div>
+
                     <div class="flex flex-col md:col-span-2">
-                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Alamat Lengkap</label>
-                        <input type="text" id="alamat" required class="border rounded-lg p-2 outline-none">
+                        <label class="text-[10px] font-black text-gray-500 mb-1 uppercase tracking-widest">Alamat Lengkap</label>
+                        <input type="text" id="alamat" required class="border rounded-lg p-2.5 outline-none bg-gray-50">
                     </div>
+
                     <div class="flex flex-col md:col-span-2">
-                        <label class="text-xs font-bold text-gray-600 mb-1 uppercase">Foto Warga</label>
-                        <input type="file" id="foto" accept="image/*" class="text-sm">
+                        <label class="text-[10px] font-black text-gray-500 mb-1 uppercase tracking-widest">Upload Foto</label>
+                        <input type="file" id="foto" accept="image/*" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
+
                     <div class="flex items-end">
-                        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md transition-all disabled:bg-gray-400">
+                        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs">
                             Simpan Data
                         </button>
                     </div>
                 </form>
             </div>
 
+            <!-- Table Section -->
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="p-4 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-4 no-print">
                     <div class="flex items-center gap-4 w-full md:w-auto">
-                        <h2 class="text-xl font-bold text-gray-700">Daftar Warga</h2>
-                        <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama atau alamat..." class="border rounded-full px-4 py-1.5 text-sm focus:ring-2 focus:ring-blue-300 outline-none w-full md:w-64">
+                        <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari warga..." class="border rounded-full px-5 py-2 text-sm focus:ring-2 focus:ring-blue-300 outline-none w-full md:w-72 bg-white shadow-inner">
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="window.print()" class="bg-blue-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm transition-all">Print A4</button>
-                        <button onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-all">Excel</button>
-                        <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-all">PDF</button>
-                        <button onclick="askDelete('ALL')" class="bg-gray-200 hover:bg-red-100 text-gray-600 hover:text-red-600 px-4 py-2 rounded-lg text-sm transition-all font-medium">Hapus Semua</button>
+                        <button onclick="window.print()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black transition-all">CETAK A4</button>
+                        <button onclick="exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-700 transition-all">EXCEL</button>
+                        <button onclick="askDelete('ALL')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition-all">HAPUS SEMUA</button>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto min-h-[200px] relative">
-                    <div id="tableLoading" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10 hidden">
-                        <div class="loading-spinner"></div>
-                    </div>
+                <div class="overflow-x-auto min-h-[300px]">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-blue-50 text-blue-800 uppercase text-xs font-bold">
+                        <thead class="bg-gray-100 text-gray-600 uppercase text-[10px] font-black tracking-widest border-b">
                             <tr>
-                                <th class="px-4 py-3 border">No</th>
-                                <th class="px-4 py-3 border text-center">Foto</th>
-                                <th class="px-4 py-3 border">Nama</th>
-                                <th class="px-4 py-3 border text-center">Wilayah</th>
-                                <th class="px-4 py-3 border">Rekening</th>
-                                <th class="px-4 py-3 border">Alamat</th>
-                                <th class="px-4 py-3 border">HP</th>
-                                <th class="px-4 py-3 border text-center no-print">Aksi</th>
+                                <th class="px-4 py-4 border text-center">No</th>
+                                <th class="px-4 py-4 border text-center">Foto</th>
+                                <th class="px-4 py-4 border">Identitas Warga</th>
+                                <th class="px-4 py-4 border text-center">Wilayah</th>
+                                <th class="px-4 py-4 border">No. Rekening</th>
+                                <th class="px-4 py-4 border no-print text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="text-sm text-gray-700"></tbody>
+                        <tbody id="tableBody" class="text-sm text-gray-700 divide-y"></tbody>
                     </table>
                 </div>
-                <div id="emptyState" class="p-12 text-center text-gray-400 hidden">
-                    Tidak ada data ditemukan.
+                <div id="emptyState" class="p-20 text-center text-gray-400 font-bold uppercase tracking-widest text-xs hidden">
+                    Belum Ada Data Tersimpan
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Modals & Toasts -->
-    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[500] no-print p-4">
-        <div class="bg-white w-full max-w-md rounded-xl p-6 shadow-2xl scale-95 transition-transform">
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi</h3>
-            <p id="deleteMsg" class="text-gray-600 mb-6">Apakah anda yakin?</p>
+    <!-- Modals -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[500] p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-2 uppercase">Hapus Data?</h3>
+            <p class="text-gray-500 text-sm mb-6">Tindakan ini tidak dapat dibatalkan. Anda yakin ingin menghapus?</p>
             <div class="flex justify-end gap-3">
-                <button onclick="closeModal()" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Batal</button>
-                <button id="confirmBtn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold shadow-lg">Hapus</button>
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-400 font-bold text-xs uppercase">Batal</button>
+                <button id="confirmBtn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold shadow-lg text-xs uppercase tracking-widest">Ya, Hapus</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-opacity pointer-events-none z-[600]">
-        Data diperbarui!
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-[600] font-bold text-xs uppercase tracking-widest">
+        Data Berhasil Disimpan
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Inisialisasi Firebase
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'desa-app-03';
 
         let dataWarga = [];
-        let currentUser = null;
         let currentDeleteTarget = null;
+        let unsubscribeWarga = null;
 
-        // --- SISTEM LOGIN & AUTH ---
-
-        const checkLoginState = () => {
-            const isLogged = sessionStorage.getItem('isLoggedIn');
+        // --- LOGIKA AUTENTIKASI ---
+        
+        const initLogin = () => {
+            const isLogged = localStorage.getItem('isLoggedIn');
             if (isLogged === 'true') {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
+                showApp();
             }
+        };
+
+        const showApp = () => {
+            const ls = document.getElementById('loginScreen');
+            const ma = document.getElementById('mainApp');
+            if (ls) ls.classList.add('hidden');
+            if (ma) ma.classList.remove('hidden');
+            initFirebaseConnection();
         };
 
         document.getElementById('loginForm').onsubmit = (e) => {
             e.preventDefault();
             const u = document.getElementById('loginUsername').value;
             const p = document.getElementById('loginPassword').value;
-            const errorMsg = document.getElementById('loginError');
+            const errorDiv = document.getElementById('loginError');
 
             if (u === 'Ameth' && p === 'Kliwon03') {
-                errorMsg.classList.add('hidden');
-                sessionStorage.setItem('isLoggedIn', 'true');
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                showToast("Selamat Datang, Ameth!");
+                localStorage.setItem('isLoggedIn', 'true');
+                errorDiv.classList.add('hidden');
+                showApp();
             } else {
-                errorMsg.classList.remove('hidden');
-                // Auto hide error after 5 seconds
-                setTimeout(() => errorMsg.classList.add('hidden'), 5000);
+                errorDiv.classList.remove('hidden');
+                setTimeout(() => errorDiv.classList.add('hidden'), 4000);
             }
+        };
+
+        window.togglePasswordVisibility = () => {
+            const passInput = document.getElementById('loginPassword');
+            const eyeOpen = document.getElementById('eyeOpen');
+            const eyeClosed = document.getElementById('eyeClosed');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeOpen.classList.add('hidden');
+                eyeClosed.classList.remove('hidden');
+            } else {
+                passInput.type = 'password';
+                eyeOpen.classList.remove('hidden');
+                eyeClosed.classList.add('hidden');
+            }
+        };
+
+        window.handleLogout = () => {
+            if (unsubscribeWarga) unsubscribeWarga();
+            localStorage.removeItem('isLoggedIn');
+            window.location.reload();
         };
 
         window.toggleResetMode = (show) => {
             document.getElementById('resetArea').classList.toggle('hidden', !show);
             document.getElementById('loginForm').classList.toggle('hidden', show);
-            document.getElementById('loginError').classList.add('hidden');
         };
 
         window.handleReset = () => {
             const email = document.getElementById('resetEmail').value;
-            const target = "rambatanwetan03@gmail.com";
-            
-            if (email !== target) {
-                alert(`Email verifikasi tidak cocok. Silahkan hubungi admin di ${target}`);
-            } else {
-                alert(`Instruksi verifikasi telah dikirim ke ${target}. Silahkan cek kotak masuk Anda.`);
+            const adminEmail = "rambatanwetan03@gmail.com";
+            if(email === adminEmail) {
+                alert("Permintaan pemulihan telah dikirim ke admin. Silahkan cek email Anda.");
                 toggleResetMode(false);
+            } else {
+                alert("Email tidak terdaftar sebagai admin!");
             }
         };
 
-        window.handleLogout = () => {
-            sessionStorage.removeItem('isLoggedIn');
-            location.reload();
-        };
-
-        // --- CORE DATABASE LOGIC ---
+        // --- LOGIKA DATABASE ---
 
         const getPublicCollection = () => collection(db, 'artifacts', appId, 'public', 'data', 'warga');
         const getPublicDoc = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'warga', id.toString());
 
-        const initAuth = async () => {
+        const initFirebaseConnection = async () => {
             try {
+                // Rule 3: Auth Before Queries - Pastikan login selesai sebelum fetch data
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (err) { console.error(err); }
+
+                onAuthStateChanged(auth, (user) => {
+                    const sd = document.getElementById('statusDot');
+                    const st = document.getElementById('statusText');
+                    
+                    if (user) {
+                        if (sd) sd.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_green]";
+                        if (st) st.innerText = "ONLINE";
+                        // Mulai pendengar setelah user valid
+                        setupRealtimeListener(user.uid);
+                    } else {
+                        if (sd) sd.className = "w-3 h-3 rounded-full bg-red-500";
+                        if (st) st.innerText = "OFFLINE";
+                    }
+                });
+            } catch (err) {
+                console.error("Auth error:", err);
+            }
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-green-500";
-                document.getElementById('statusText').innerText = "Cloud Terhubung";
-                setupDataListener();
-            }
-        });
+        const setupRealtimeListener = (uid) => {
+            if (unsubscribeWarga) unsubscribeWarga();
+            if (!auth.currentUser) return;
 
-        const setupDataListener = () => {
-            onSnapshot(getPublicCollection(), (snapshot) => {
+            // Pastikan path sesuai dengan Rule 1
+            unsubscribeWarga = onSnapshot(getPublicCollection(), (snapshot) => {
                 dataWarga = [];
                 snapshot.forEach(doc => dataWarga.push({ id: doc.id, ...doc.data() }));
                 
-                // Sort Logic: RW -> RT -> Nama
+                // Sort di memori (Rule 2: No Complex Queries)
                 dataWarga.sort((a, b) => {
                     const rwA = parseInt(a.tipeWilayah === 'RW' ? a.noWilayah : 999);
                     const rwB = parseInt(b.tipeWilayah === 'RW' ? b.noWilayah : 999);
                     if (a.tipeWilayah !== b.tipeWilayah) return a.tipeWilayah === 'RW' ? -1 : 1;
                     if (parseInt(a.noWilayah) !== parseInt(b.noWilayah)) return parseInt(a.noWilayah) - parseInt(b.noWilayah);
-                    return a.nama.localeCompare(b.nama);
+                    return (a.nama || "").localeCompare(b.nama || "");
                 });
                 renderTable();
+            }, (error) => {
+                console.error("Snapshot error:", error);
+                // Jika error permission, coba re-autentikasi otomatis
+                if (error.code === 'permission-denied') {
+                    console.log("Mencoba menyambungkan kembali...");
+                }
             });
         };
 
         window.renderTable = () => {
             const tbody = document.getElementById('tableBody');
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            if (!tbody || !searchInput) return;
+
+            const search = searchInput.value.toLowerCase();
             tbody.innerHTML = '';
 
-            const filtered = dataWarga.filter(w => (w.nama || "").toLowerCase().includes(search) || (w.alamat || "").toLowerCase().includes(search));
+            const filtered = dataWarga.filter(w => 
+                (w.nama || "").toLowerCase().includes(search) || 
+                (w.alamat || "").toLowerCase().includes(search)
+            );
+
             document.getElementById('emptyState').classList.toggle('hidden', filtered.length > 0);
 
             filtered.forEach((w, i) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 border-b odd:bg-white even:bg-gray-50";
+                tr.className = "hover:bg-blue-50/50 transition-colors";
                 tr.innerHTML = `
-                    <td class="px-4 py-3 text-center border">${i + 1}</td>
-                    <td class="px-4 py-3 border text-center">
-                        <img src="${w.foto || 'https://via.placeholder.com/50'}" class="w-10 h-10 object-cover rounded-full border mx-auto">
+                    <td class="px-4 py-4 border text-center font-bold text-gray-400">${i + 1}</td>
+                    <td class="px-4 py-4 border text-center">
+                        <img src="${w.foto || 'https://via.placeholder.com/80'}" class="w-12 h-12 object-cover rounded-lg border-2 border-white shadow-sm mx-auto">
                     </td>
-                    <td class="px-4 py-3 border font-semibold">${w.nama}</td>
-                    <td class="px-4 py-3 border text-center font-bold text-blue-600">${w.tipeWilayah} ${w.noWilayah}</td>
-                    <td class="px-4 py-3 border font-mono text-xs">${w.rekening}</td>
-                    <td class="px-4 py-3 border truncate max-w-[150px]">${w.alamat}</td>
-                    <td class="px-4 py-3 border text-xs">${w.hp}</td>
-                    <td class="px-4 py-3 border flex gap-1 justify-center no-print">
-                        <button onclick="editData('${w.id}')" class="bg-yellow-400 text-white px-2 py-1 rounded text-[10px] font-bold">EDIT</button>
-                        <button onclick="askDelete('${w.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">HAPUS</button>
+                    <td class="px-4 py-4 border">
+                        <div class="font-bold text-gray-800 uppercase">${w.nama}</div>
+                        <div class="text-[10px] text-gray-500 font-medium">${w.alamat}</div>
+                        <div class="text-[10px] text-blue-600 font-bold mt-1">${w.hp}</div>
+                    </td>
+                    <td class="px-4 py-4 border text-center font-black">
+                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-[10px]">${w.tipeWilayah} ${w.noWilayah}</span>
+                    </td>
+                    <td class="px-4 py-4 border font-mono text-xs font-bold text-gray-600">${w.rekening}</td>
+                    <td class="px-4 py-4 border no-print">
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="editData('${w.id}')" class="bg-yellow-400 hover:bg-yellow-500 p-2 rounded-lg text-white transition-all shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            </button>
+                            <button onclick="askDelete('${w.id}')" class="bg-red-500 hover:bg-red-600 p-2 rounded-lg text-white transition-all shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -360,12 +424,15 @@
 
         document.getElementById('dataForm').onsubmit = async (e) => {
             e.preventDefault();
+            if (!auth.currentUser) return alert("Sistem offline atau belum terautentikasi.");
+            
             const btn = document.getElementById('submitBtn');
             const eid = document.getElementById('editId').value;
             const fInput = document.getElementById('foto');
             btn.disabled = true;
+            btn.innerText = "SEDANG MEMPROSES...";
 
-            const save = async (base64 = null) => {
+            const saveProcess = async (base64 = null) => {
                 const id = eid || Date.now().toString();
                 const exist = eid ? dataWarga.find(x => x.id === eid) : null;
                 const docData = {
@@ -378,17 +445,25 @@
                     foto: base64 || (exist ? exist.foto : null),
                     updatedAt: serverTimestamp()
                 };
-                await setDoc(getPublicDoc(id), docData);
-                showToast("Data Berhasil Disimpan!");
-                resetForm();
-                btn.disabled = false;
+                try {
+                    await setDoc(getPublicDoc(id), docData);
+                    showToast(eid ? "DATA DIUPDATE" : "DATA TERSIMPAN");
+                    resetForm();
+                } catch (err) {
+                    alert("Gagal menyimpan ke cloud: " + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = "SIMPAN DATA";
+                }
             };
 
             if (fInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (ev) => save(ev.target.result);
+                reader.onload = (ev) => saveProcess(ev.target.result);
                 reader.readAsDataURL(fInput.files[0]);
-            } else { save(); }
+            } else { 
+                saveProcess(); 
+            }
         };
 
         window.editData = (id) => {
@@ -401,7 +476,7 @@
             document.getElementById('rekening').value = w.rekening;
             document.getElementById('hp').value = w.hp;
             document.getElementById('alamat').value = w.alamat;
-            document.getElementById('submitBtn').innerText = "Update Data";
+            document.getElementById('submitBtn').innerText = "UPDATE DATA";
             document.getElementById('cancelEdit').classList.remove('hidden');
             window.scrollTo({top: 0, behavior: 'smooth'});
         };
@@ -409,7 +484,7 @@
         window.resetForm = () => {
             document.getElementById('dataForm').reset();
             document.getElementById('editId').value = '';
-            document.getElementById('submitBtn').innerText = "Simpan Data";
+            document.getElementById('submitBtn').innerText = "SIMPAN DATA";
             document.getElementById('cancelEdit').classList.add('hidden');
         };
 
@@ -421,44 +496,49 @@
         window.closeModal = () => document.getElementById('deleteModal').classList.add('hidden');
 
         document.getElementById('confirmBtn').onclick = async () => {
-            if (currentDeleteTarget === 'ALL') {
-                const snap = await getDocs(getPublicCollection());
-                snap.forEach(async d => await deleteDoc(getPublicDoc(d.id)));
-            } else {
-                await deleteDoc(getPublicDoc(currentDeleteTarget));
+            if (!auth.currentUser) return;
+            try {
+                if (currentDeleteTarget === 'ALL') {
+                    const snap = await getDocs(getPublicCollection());
+                    const promises = snap.docs.map(d => deleteDoc(getPublicDoc(d.id)));
+                    await Promise.all(promises);
+                } else {
+                    await deleteDoc(getPublicDoc(currentDeleteTarget));
+                }
+                showToast("DATA TERHAPUS");
+            } catch (err) {
+                alert("Gagal menghapus: " + err.message);
+            } finally {
+                closeModal();
             }
-            closeModal();
-            showToast("Data Dihapus");
         };
 
         const showToast = (m) => {
             const t = document.getElementById('toast');
             t.innerText = m;
-            t.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 3000);
+            t.style.opacity = "1";
+            t.style.bottom = "40px";
+            setTimeout(() => {
+                t.style.opacity = "0";
+                t.style.bottom = "20px";
+            }, 3000);
         };
 
         window.exportExcel = () => {
-            const ws = XLSX.utils.json_to_sheet(dataWarga.map((w, i) => ({ No: i+1, Nama: w.nama, Wilayah: `${w.tipeWilayah} ${w.noWilayah}`, Rekening: w.rekening, HP: w.hp })));
+            const ws = XLSX.utils.json_to_sheet(dataWarga.map((w, i) => ({ 
+                No: i+1, 
+                Nama: w.nama, 
+                Wilayah: `${w.tipeWilayah} ${w.noWilayah}`, 
+                Rekening: w.rekening, 
+                HP: w.hp,
+                Alamat: w.alamat
+            })));
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Warga");
+            XLSX.utils.book_append_sheet(wb, ws, "DaftarWarga");
             XLSX.writeFile(wb, "Data_Warga_RambatanWetan.xlsx");
         };
 
-        window.exportPDF = () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("DATA WARGA RAMBATAN WETAN", 10, 10);
-            doc.autoTable({
-                head: [['No', 'Nama', 'Wilayah', 'Rekening', 'HP']],
-                body: dataWarga.map((w, i) => [i+1, w.nama, `${w.tipeWilayah} ${w.noWilayah}`, w.rekening, w.hp])
-            });
-            doc.save("Data_Warga.pdf");
-        };
-
-        document.getElementById('dateNow').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        checkLoginState();
-        initAuth();
+        initLogin();
     </script>
 </body>
 </html>
