@@ -231,7 +231,23 @@
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Inisialisasi Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAlu0QQJSl3Jfo4ddpKv17Ge2mSRO8OLfo",
+  authDomain: "desa-rambatan-app-2026.firebaseapp.com",
+  projectId: "desa-rambatan-app-2026",
+  storageBucket: "desa-rambatan-app-2026.firebasestorage.app",
+  messagingSenderId: "437227637723",
+  appId: "1:437227637723:web:0b0c80628211aa0cdf35fe"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
