@@ -1,765 +1,439 @@
 <!DOCTYPE html>
-
 <html lang="id">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Pendataan RT/RW Rambatan Wetan</title>
-
+    <title>Data Penduduk Rambatan Wetan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Library untuk PDF dan Excel -->
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-
         body { font-family: 'Inter', sans-serif; }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-
-
-
-        /* Styling khusus Cetak / Print */
-
-        @media print {
-
-            @page {
-
-                size: A4;
-
-                margin: 10mm;
-
-            }
-
-            body {
-
-                background: white;
-
-                padding: 0;
-
-            }
-
-            header, #dataFormContainer, .action-buttons, .no-print, footer {
-
-                display: none !important;
-
-            }
-
-            .container {
-
-                width: 100% !important;
-
-                max-width: none !important;
-
-                padding: 0 !important;
-
-                margin: 0 !important;
-
-            }
-
-            .bg-white {
-
-                box-shadow: none !important;
-
-                border: none !important;
-
-            }
-
-            #printHeader {
-
-                display: block !important;
-
-                text-align: center;
-
-                margin-bottom: 20px;
-
-                border-bottom: 2px solid black;
-
-                padding-bottom: 10px;
-
-            }
-
-            table {
-
-                width: 100% !important;
-
-                border: 1px solid black !important;
-
-            }
-
-            th, td {
-
-                border: 1px solid black !important;
-
-                color: black !important;
-
-            }
-
-            img {
-
-                max-width: 40px !important;
-
-            }
-
-        }
-
-
-
-        #printHeader {
-
-            display: none;
-
-        }
-
-
-
-        /* Modal Custom Styling */
-
-        .modal {
-
-            transition: opacity 0.25s ease;
-
-        }
-
-        body.modal-active {
-
-            overflow-x: hidden;
-
-            overflow-y: hidden !important;
-
-        }
-
+        .modal { transition: opacity 0.25s ease; }
     </style>
-
 </head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
 
-<body class="bg-gray-50 min-h-screen">
-
-
-
-    <!-- Header Visual Aplikasi -->
-
-    <header class="bg-blue-800 text-white p-6 shadow-lg sticky top-0 z-50">
-
-        <div class="container mx-auto text-center">
-
-            <h1 class="text-xl md:text-3xl font-bold uppercase tracking-wide">Pemerintah Desa Rambatan Wetan</h1>
-
-            <p class="text-sm md:text-lg opacity-90 mt-1">Data RW Dan RT Rambatan Wetan</p>
-
-        </div>
-
-    </header>
-
-
-
-    <!-- Header Khusus Saat Cetak (Print) -->
-
-    <div id="printHeader">
-
-        <h1 style="font-size: 20pt; font-weight: bold; text-transform: uppercase;">Pemerintah Desa Rambatan Wetan</h1>
-
-        <h2 style="font-size: 14pt; font-weight: bold;">Laporan Data RT / RW</h2>
-
-        <p style="font-size: 10pt;">Tanggal Cetak: <span id="printDate"></span></p>
-
-    </div>
-
-
-
-    <main class="container mx-auto p-4 md:p-8">
-
-        <!-- Form Input -->
-
-        <div id="dataFormContainer" class="bg-white rounded-xl shadow-md p-6 mb-8 border-t-4 border-blue-600">
-
-            <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Form Input Data Warga</h2>
-
-            <form id="dataForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                <div class="flex flex-col">
-
-                    <label class="text-sm font-medium text-gray-600">Nama Lengkap</label>
-
-                    <input type="text" id="nama" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 flex items-center justify-center bg-blue-600 z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                    </svg>
                 </div>
-
-               
-
-                <div class="flex flex-col">
-
-                    <label class="text-sm font-medium text-gray-600">Tipe & Nomor (RT/RW)</label>
-
-                    <div class="flex gap-2">
-
-                        <select id="tipeWilayah" class="border rounded-lg p-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none w-1/2">
-
-                            <option value="RT">RT</option>
-
-                            <option value="RW">RW</option>
-
-                        </select>
-
-                        <input type="number" id="noWilayah" placeholder="No" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none w-1/2">
-
+                <h1 class="text-2xl font-bold text-gray-900">Selamat Datang</h1>
+                <p class="text-gray-500">Silakan masuk untuk akses data</p>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div class="relative">
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <div class="relative">
+                        <input type="password" id="password" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-blue-600 focus:outline-none">
+                            <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
                     </div>
-
                 </div>
-
-
-
-                <div class="flex flex-col">
-
-                    <label class="text-sm font-medium text-gray-600">Nomor Rekening</label>
-
-                    <input type="text" id="rekening" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-
-                </div>
-
-                <div class="flex flex-col">
-
-                    <label class="text-sm font-medium text-gray-600">Nomor HP (Contoh: 0812...)</label>
-
-                    <input type="text" id="hp" placeholder="08xxxxxxxxxx" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-
-                </div>
-
-                <div class="flex flex-col md:col-span-2">
-
-                    <label class="text-sm font-medium text-gray-600">Alamat</label>
-
-                    <input type="text" id="alamat" required class="border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-
-                </div>
-
-                <div class="flex flex-col md:col-span-2">
-
-                    <label class="text-sm font-medium text-gray-600">Upload Foto</label>
-
-                    <input type="file" id="foto" accept="image/*" class="border rounded-lg p-1.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50">
-
-                </div>
-
-                <div class="flex items-end">
-
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all shadow-md">
-
-                        Simpan Data
-
-                    </button>
-
-                </div>
-
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition duration-200">
+                    Masuk
+                </button>
             </form>
-
+            <div id="loginError" class="hidden mt-4 text-center text-red-500 text-sm bg-red-50 p-2 rounded">
+                Username atau Password salah!
+            </div>
         </div>
-
-
-
-        <!-- Action Buttons & Table -->
-
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-
-            <div class="p-4 bg-gray-50 border-b flex flex-wrap justify-between items-center gap-4">
-
-                <h2 class="text-xl font-semibold text-gray-700">Daftar Warga</h2>
-
-                <div class="flex flex-wrap gap-2 action-buttons">
-
-                    <button onclick="window.print()" class="bg-blue-900 hover:bg-blue-950 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-
-                        <span>Print A4</span>
-
-                    </button>
-
-                    <button onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
-
-                        <span>Excel</span>
-
-                    </button>
-
-                    <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
-
-                        <span>PDF</span>
-
-                    </button>
-
-                    <button onclick="hapusSemua()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm no-print">
-
-                        <span>Hapus Semua</span>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-
-
-            <div class="overflow-x-auto no-scrollbar">
-
-                <table id="wargaTable" class="w-full text-left border-collapse">
-
-                    <thead class="bg-blue-50 text-blue-800 uppercase text-xs font-bold">
-
-                        <tr>
-
-                            <th class="px-4 py-3 border">No</th>
-
-                            <th class="px-4 py-3 border text-center">Foto</th>
-
-                            <th class="px-4 py-3 border">Nama</th>
-
-                            <th class="px-4 py-3 border text-center">Wilayah</th>
-
-                            <th class="px-4 py-3 border">Rekening</th>
-
-                            <th class="px-4 py-3 border">Alamat</th>
-
-                            <th class="px-4 py-3 border">Nomor HP</th>
-
-                            <th class="px-4 py-3 border text-center no-print">Aksi</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="tableBody" class="text-sm text-gray-700">
-
-                        <!-- Data rows -->
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-            <div id="emptyState" class="p-8 text-center text-gray-500 hidden">
-
-                Belum ada data warga.
-
-            </div>
-
-        </div>
-
-    </main>
-
-
-
-    <!-- Modal Konfirmasi Hapus -->
-
-    <div id="deleteModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[100]">
-
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-
-        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
-
-            <div class="modal-content py-4 text-left px-6">
-
-                <div class="flex justify-between items-center pb-3">
-
-                    <p class="text-2xl font-bold">Konfirmasi Hapus</p>
-
-                </div>
-
-                <p id="deleteMsg">Apakah Anda yakin ingin menghapus data ini?</p>
-
-                <div class="flex justify-end pt-4 gap-2">
-
-                    <button onclick="closeModal()" class="px-4 bg-transparent p-3 rounded-lg text-blue-500 hover:bg-gray-100 hover:text-blue-400 mr-2">Batal</button>
-
-                    <button id="confirmDeleteBtn" class="modal-close px-4 bg-red-500 p-3 rounded-lg text-white hover:bg-red-400">Hapus Sekarang</button>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </div>
 
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden">
+        <header class="bg-white border-b sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl font-bold text-blue-600">Rambatan Wetan</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-medium text-gray-900" id="userDisplayName"></p>
+                            <p class="text-xs text-gray-500" id="userRoleName"></p>
+                        </div>
+                        <button onclick="logout()" class="p-2 text-gray-500 hover:text-red-600 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
 
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Action Bar -->
+            <div class="mb-6 flex flex-wrap gap-3 justify-between items-center">
+                <div class="flex gap-2">
+                    <button onclick="downloadPDF()" class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition">
+                        PDF
+                    </button>
+                    <button onclick="downloadExcel()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition">
+                        Excel
+                    </button>
+                    <button onclick="downloadWord()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                        Word
+                    </button>
+                </div>
+                <div id="adminActions" class="hidden">
+                    <button onclick="openModal()" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                        + Tambah Data
+                    </button>
+                </div>
+            </div>
 
-    <footer class="mt-12 text-center text-gray-500 text-sm pb-8 no-print">
+            <!-- Table Card -->
+            <div class="bg-white rounded-xl shadow overflow-hidden border">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Lahir</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No SK</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun SK</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No HP</th>
+                                <th class="admin-col hidden px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data rows will appear here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
 
-        &copy; 2024 Pemerintah Desa Rambatan Wetan. Semua Hak Dilindungi.
-
-    </footer>
-
-
+    <!-- Modal Form -->
+    <div id="dataModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        <div class="modal-container bg-white w-full max-w-lg mx-auto rounded-xl shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3 border-b mb-4">
+                    <p class="text-xl font-bold text-gray-900" id="modalTitle">Tambah Data Penduduk</p>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <form id="pendudukForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="hidden" id="editIndex" value="">
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                        <input type="text" id="formNama" class="mt-1 block w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
+                        <input type="text" id="formTgl" placeholder="DD-MM-YYYY" class="mt-1 block w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">No SK</label>
+                        <input type="text" id="formSK" class="mt-1 block w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tahun SK</label>
+                        <input type="number" id="formTahun" class="mt-1 block w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">No HP</label>
+                        <input type="text" id="formHP" class="mt-1 block w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Alamat</label>
+                        <textarea id="formAlamat" rows="2" class="mt-1 block w-full px-3 py-2 border rounded-lg" required></textarea>
+                    </div>
+                    <div class="sm:col-span-2 pt-4 flex justify-end space-x-3 border-t">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Simpan Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
-
-        // Inisialisasi data dari Local Storage
-
-        let dataWarga = JSON.parse(localStorage.getItem('data_warga_rambatan')) || [];
-
-        let itemToDelete = null;
-
-
-
-        const form = document.getElementById('dataForm');
-
-        const tableBody = document.getElementById('tableBody');
-
-        const emptyState = document.getElementById('emptyState');
-
-        const deleteModal = document.getElementById('deleteModal');
-
-
-
-        // Mengatur tanggal cetak otomatis
-
-        document.getElementById('printDate').innerText = new Date().toLocaleDateString('id-ID', {
-
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-
+        // Logika Toggle Password (Hanya Tambahan Kecil Tanpa Mengubah Script Data)
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const eyeOpen = document.getElementById('eyeOpen');
+            const eyeClosed = document.getElementById('eyeClosed');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeOpen.classList.remove('hidden');
+                eyeClosed.classList.add('hidden');
+            } else {
+                passwordInput.type = 'password';
+                eyeOpen.classList.add('hidden');
+                eyeClosed.classList.remove('hidden');
+            }
         });
 
+        // Data Awal
+        let pendudukData = [
+            { no: 1, nama: "ENDI SUSANTO", tgl: "08-02-1964", sk: "045", tahun: 2026, alamat: "Rambatan Wetan", hp: "087862952268" },
+            { no: 2, nama: "SOLEH S", tgl: "15-04-1971", sk: "044", tahun: 2026, alamat: "Rambatan Wetan", hp: "081321574356" },
+            { no: 3, nama: "ADE IRAWAN", tgl: "26-10-1986", sk: "028", tahun: 2026, alamat: "Rambatan Wetan", hp: "085861718699" },
+            { no: 4, nama: "ROSUL HADIYANTO", tgl: "22-08-1975", sk: "029", tahun: 2026, alamat: "Rambatan Wetan", hp: "081522793022" },
+            { no: 5, nama: "ABDUROHIM", tgl: "09-11-1984", sk: "030", tahun: 2026, alamat: "Rambatan Wetan", hp: "082126453501" },
+            { no: 6, nama: "RATNA", tgl: "01-03-1977", sk: "027", tahun: 2026, alamat: "Rambatan Wetan", hp: "081904021042" },
+            { no: 7, nama: "RASUDI", tgl: "11-08-1973", sk: "026", tahun: 2026, alamat: "Rambatan Wetan", hp: "087852408999" },
+            { no: 8, nama: "TARUDIN", tgl: "12-09-1961", sk: "043", tahun: 2026, alamat: "Rambatan Wetan", hp: "087757403211" },
+            { no: 9, nama: "RASTIMAN", tgl: "03-04-1979", sk: "041", tahun: 2026, alamat: "Rambatan Wetan", hp: "087887346997" },
+            { no: 10, nama: "CARDAKA", tgl: "04-05-1984", sk: "047", tahun: 2026, alamat: "Rambatan Wetan", hp: "085966508839" },
+            { no: 11, nama: "HASAN", tgl: "20-12-1972", sk: "042", tahun: 2026, alamat: "Rambatan Wetan", hp: "085942112378" },
+            { no: 12, nama: "TARKUDI", tgl: "15-02-1971", sk: "036", tahun: 2026, alamat: "Rambatan Wetan", hp: "085797901475" },
+            { no: 13, nama: "SAKUDIN", tgl: "04-03-1980", sk: "035", tahun: 2026, alamat: "Rambatan Wetan", hp: "085798070713" },
+            { no: 14, nama: "RASWADI", tgl: "15-01-1971", sk: "038", tahun: 2026, alamat: "Rambatan Wetan", hp: "087757240470" },
+            { no: 15, nama: "CARITA", tgl: "10-06-1971", sk: "034", tahun: 2026, alamat: "Rambatan Wetan", hp: "083898182549" },
+            { no: 16, nama: "E. KUSNADI", tgl: "03-07-1977", sk: "037", tahun: 2026, alamat: "Rambatan Wetan", hp: "087836134115" },
+            { no: 17, nama: "CASITA", tgl: "10-11-1970", sk: "014", tahun: 2026, alamat: "Rambatan Wetan", hp: "082119896080" },
+            { no: 18, nama: "TADI", tgl: "22-04-1972", sk: "012", tahun: 2026, alamat: "Rambatan Wetan", hp: "081313643082" },
+            { no: 19, nama: "TADI", tgl: "12-08-1982", sk: "013", tahun: 2026, alamat: "Rambatan Wetan", hp: "085724304717" },
+            { no: 20, nama: "SURYADI", tgl: "10-03-1979", sk: "031", tahun: 2026, alamat: "Rambatan Wetan", hp: "081818473784" },
+            { no: 21, nama: "NONO KARSONO", tgl: "24-11-1985", sk: "009", tahun: 2026, alamat: "Rambatan Wetan", hp: "08977114793" },
+            { no: 22, nama: "ABDUL KHOLIL", tgl: "20-03-1981", sk: "011", tahun: 2026, alamat: "Rambatan Wetan", hp: "0895326253275" },
+            { no: 23, nama: "NASAEDI", tgl: "15-02-1985", sk: "010", tahun: 2026, alamat: "Rambatan Wetan", hp: "085221908019" },
+            { no: 24, nama: "DASUKI", tgl: "04-03-1979", sk: "022", tahun: 2026, alamat: "Rambatan Wetan", hp: "08989707470" },
+            { no: 25, nama: "RIYANTO", tgl: "08-08-1994", sk: "021", tahun: 2026, alamat: "Rambatan Wetan", hp: "081219856798" },
+            { no: 26, nama: "KADNAWI", tgl: "06-12-1976", sk: "023", tahun: 2026, alamat: "Rambatan Wetan", hp: "081339714263" },
+            { no: 27, nama: "NONO", tgl: "31-12-1959", sk: "024", tahun: 2026, alamat: "Rambatan Wetan", hp: "0895403035413" },
+            { no: 28, nama: "TADI", tgl: "18-11-1979", sk: "016", tahun: 2026, alamat: "Rambatan Wetan", hp: "082310371718" },
+            { no: 29, nama: "TAPING", tgl: "01-02-1973", sk: "025", tahun: 2026, alamat: "Rambatan Wetan", hp: "087858112367" },
+            { no: 30, nama: "WARJO", tgl: "06-12-1976", sk: "017", tahun: 2026, alamat: "Rambatan Wetan", hp: "087878289658" },
+            { no: 31, nama: "DULANI", tgl: "21-11-1985", sk: "015", tahun: 2026, alamat: "Rambatan Wetan", hp: "08224355146" },
+            { no: 32, nama: "CASWADI", tgl: "19-05-1979", sk: "018", tahun: 2026, alamat: "Rambatan Wetan", hp: "0895428568880" },
+            { no: 33, nama: "SUKI", tgl: "28-08-1974", sk: "019", tahun: 2026, alamat: "Rambatan Wetan", hp: "087847474203" },
+            { no: 34, nama: "TARMIN", tgl: "10-02-1983", sk: "046", tahun: 2026, alamat: "Rambatan Wetan", hp: "08978391418" },
+            { no: 35, nama: "WARNITA", tgl: "23-06-1978", sk: "020", tahun: 2026, alamat: "Rambatan Wetan", hp: "082128824668" },
+            { no: 36, nama: "SANUSI", tgl: "03-05-1967", sk: "039", tahun: 2026, alamat: "Rambatan Wetan", hp: "087825250221" },
+            { no: 37, nama: "SARBINI", tgl: "18-03-1960", sk: "040", tahun: 2026, alamat: "Rambatan Wetan", hp: "085134395331" },
+            { no: 38, nama: "SARNIJAH", tgl: "20-08-1973", sk: "032", tahun: 2026, alamat: "Rambatan Wetan", hp: "087817133110" }
+        ];
 
+        let currentUser = null;
 
-        // Simpan data ke Local Storage
-
-        function saveToLocal() {
-
-            localStorage.setItem('data_warga_rambatan', JSON.stringify(dataWarga));
-
-        }
-
-
-
-        form.addEventListener('submit', function(e) {
-
+        // Login Logic
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
 
-           
-
-            const fotoInput = document.getElementById('foto');
-
-            let fotoUrl = 'https://via.placeholder.com/50';
-
-
-
-            const handleData = (imgBase64 = fotoUrl) => {
-
-                const citizen = {
-
-                    id: Date.now(),
-
-                    nama: document.getElementById('nama').value,
-
-                    tipeWilayah: document.getElementById('tipeWilayah').value,
-
-                    noWilayah: document.getElementById('noWilayah').value,
-
-                    rekening: document.getElementById('rekening').value,
-
-                    hp: document.getElementById('hp').value,
-
-                    alamat: document.getElementById('alamat').value,
-
-                    foto: imgBase64
-
-                };
-
-
-
-                dataWarga.push(citizen);
-
-                saveToLocal();
-
-                renderTable();
-
-                form.reset();
-
-            };
-
-
-
-            if (fotoInput.files && fotoInput.files[0]) {
-
-                const reader = new FileReader();
-
-                reader.onload = (event) => handleData(event.target.result);
-
-                reader.readAsDataURL(fotoInput.files[0]);
-
+            if (u === "Kliwon03" && p === "Ramwet03") {
+                currentUser = { username: "Kliwon03", role: "Viewer" };
+                initApp();
+            } else if (u === "Ameth03" && p === "Ramwet03") {
+                currentUser = { username: "Ameth03", role: "Admin" };
+                initApp();
             } else {
-
-                handleData();
-
+                errorEl.classList.remove('hidden');
             }
-
         });
 
+        function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userDisplayName').innerText = currentUser.username;
+            document.getElementById('userRoleName').innerText = currentUser.role === 'Admin' ? 'Akses Penuh' : 'Hanya Lihat';
 
-
-        function renderTable() {
-
-            tableBody.innerHTML = '';
-
-           
-
-            if (dataWarga.length === 0) {
-
-                emptyState.classList.remove('hidden');
-
-            } else {
-
-                emptyState.classList.add('hidden');
-
+            if (currentUser.role === 'Admin') {
+                document.getElementById('adminActions').classList.remove('hidden');
+                document.querySelectorAll('.admin-col').forEach(el => el.classList.remove('hidden'));
             }
-
-
-
-            dataWarga.forEach((w, index) => {
-
-                const tr = document.createElement('tr');
-
-                tr.className = "hover:bg-gray-50 transition-colors border-b";
-
-                tr.innerHTML = `
-
-                    <td class="px-4 py-3 text-center border font-medium">${index + 1}</td>
-
-                    <td class="px-4 py-3 border text-center">
-
-                        <img src="${w.foto}" alt="Foto" class="w-10 h-10 object-cover rounded-full border shadow-sm mx-auto">
-
-                    </td>
-
-                    <td class="px-4 py-3 border font-semibold text-blue-900">${w.nama}</td>
-
-                    <td class="px-4 py-3 border text-center font-medium">${w.tipeWilayah} ${w.noWilayah}</td>
-
-                    <td class="px-4 py-3 border font-mono text-xs">${w.rekening}</td>
-
-                    <td class="px-4 py-3 border max-w-xs truncate">${w.alamat}</td>
-
-                    <td class="px-4 py-3 border font-mono text-xs">${w.hp}</td>
-
-                    <td class="px-4 py-3 border flex gap-2 justify-center flex-wrap no-print">
-
-                        <button onclick="kirimWA(${w.id})" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">WA</button>
-
-                        <button onclick="askDelete(${w.id})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">Hapus</button>
-
-                    </td>
-
-                `;
-
-                tableBody.appendChild(tr);
-
-            });
-
-        }
-
-
-
-        // Fitur Konfirmasi Hapus
-
-        function askDelete(id) {
-
-            itemToDelete = id;
-
-            document.getElementById('deleteMsg').innerText = "Apakah Anda yakin ingin menghapus data ini?";
-
-            openModal();
-
-        }
-
-
-
-        function hapusSemua() {
-
-            itemToDelete = "ALL";
-
-            document.getElementById('deleteMsg').innerText = "Apakah Anda yakin ingin menghapus SEMUA data warga?";
-
-            openModal();
-
-        }
-
-
-
-        document.getElementById('confirmDeleteBtn').onclick = function() {
-
-            if (itemToDelete === "ALL") {
-
-                dataWarga = [];
-
-            } else {
-
-                dataWarga = dataWarga.filter(item => item.id !== itemToDelete);
-
-            }
-
-            saveToLocal();
 
             renderTable();
-
-            closeModal();
-
-        };
-
-
-
-        function openModal() {
-
-            deleteModal.classList.remove('opacity-0', 'pointer-events-none');
-
-            document.body.classList.add('modal-active');
-
         }
 
-
-
-        function closeModal() {
-
-            deleteModal.classList.add('opacity-0', 'pointer-events-none');
-
-            document.body.classList.remove('modal-active');
-
-            itemToDelete = null;
-
+        function logout() {
+            location.reload();
         }
 
+        // Table Render
+        function renderTable() {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
 
+            pendudukData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.no}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.nama}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.tgl}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.sk}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.tahun}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.alamat}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.hp}</td>
+                    <td class="admin-col ${currentUser.role !== 'Admin' ? 'hidden' : ''} px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button onclick="editData(${index})" class="text-indigo-600 hover:text-indigo-900">Edit</button>
+                        <button onclick="deleteData(${index})" class="text-red-600 hover:text-red-900">Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-        function formatWaNumber(number) {
+        // Modal Controls
+        function openModal(editIdx = null) {
+            const modal = document.getElementById('dataModal');
+            const form = document.getElementById('pendudukForm');
+            const title = document.getElementById('modalTitle');
+            
+            form.reset();
+            document.getElementById('editIndex').value = editIdx !== null ? editIdx : "";
+            title.innerText = editIdx !== null ? "Edit Data Penduduk" : "Tambah Data Penduduk";
 
-            if (number.startsWith('0')) {
-
-                return '62' + number.slice(1);
-
+            if (editIdx !== null) {
+                const d = pendudukData[editIdx];
+                document.getElementById('formNama').value = d.nama;
+                document.getElementById('formTgl').value = d.tgl;
+                document.getElementById('formSK').value = d.sk;
+                document.getElementById('formTahun').value = d.tahun;
+                document.getElementById('formAlamat').value = d.alamat;
+                document.getElementById('formHP').value = d.hp;
             }
 
-            return number;
-
+            modal.classList.remove('opacity-0', 'pointer-events-none');
         }
 
-
-
-        function kirimWA(id) {
-
-            const w = dataWarga.find(item => item.id === id);
-
-            const formattedNumber = formatWaNumber(w.hp);
-
-            const pesan = `*DATA WARGA RAMBATAN WETAN*%0A%0ANama: ${w.nama}%0A${w.tipeWilayah}: ${w.noWilayah}%0ARekening: ${w.rekening}%0AAlamat: ${w.alamat}%0AHP: ${w.hp}`;
-
-            const url = `https://wa.me/${formattedNumber}?text=${pesan}`;
-
-            window.open(url, '_blank');
-
+        function closeModal() {
+            const modal = document.getElementById('dataModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
         }
 
+        // CRUD Operations
+        document.getElementById('pendudukForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editIdx = document.getElementById('editIndex').value;
+            
+            const newData = {
+                nama: document.getElementById('formNama').value,
+                tgl: document.getElementById('formTgl').value,
+                sk: document.getElementById('formSK').value,
+                tahun: parseInt(document.getElementById('formTahun').value),
+                alamat: document.getElementById('formAlamat').value,
+                hp: document.getElementById('formHP').value
+            };
 
+            if (editIdx !== "") {
+                const idx = parseInt(editIdx);
+                pendudukData[idx] = { ...pendudukData[idx], ...newData };
+            } else {
+                const newNo = pendudukData.length > 0 ? Math.max(...pendudukData.map(o => o.no)) + 1 : 1;
+                pendudukData.push({ no: newNo, ...newData });
+            }
 
-        function exportExcel() {
+            renderTable();
+            closeModal();
+        });
 
-            if (dataWarga.length === 0) return alert('Data kosong!');
-
-            const worksheetData = dataWarga.map((w, i) => ({
-
-                "No": i + 1,
-
-                "Nama": w.nama,
-
-                "Wilayah": `${w.tipeWilayah} ${w.noWilayah}`,
-
-                "Rekening": w.rekening,
-
-                "Alamat": w.alamat,
-
-                "No HP": w.hp
-
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(worksheetData);
-
-            const wb = XLSX.utils.book_new();
-
-            XLSX.utils.book_append_sheet(wb, ws, "Data Warga");
-
-            XLSX.writeFile(wb, "Data_Warga_Rambatan_Wetan.xlsx");
-
+        function editData(index) {
+            openModal(index);
         }
 
+        function deleteData(index) {
+            if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                pendudukData.splice(index, 1);
+                renderTable();
+            }
+        }
 
-
-        function exportPDF() {
-
+        // Export Functions
+        function downloadPDF() {
             const { jsPDF } = window.jspdf;
-
-            const doc = new jsPDF('p', 'mm', 'a4');
-
-            doc.setFontSize(16);
-
-            doc.text("PEMERINTAH DESA RAMBATAN WETAN", 105, 15, { align: 'center' });
-
-            doc.setFontSize(12);
-
-            doc.text("DATA RW DAN RT RAMBATAN WETAN", 105, 22, { align: 'center' });
-
-            doc.line(20, 25, 190, 25);
-
-            const tableData = dataWarga.map((w, i) => [
-
-                i + 1,
-
-                w.nama,
-
-                `${w.tipeWilayah} ${w.noWilayah}`,
-
-                w.rekening,
-
-                w.alamat,
-
-                w.hp
-
+            const doc = new jsPDF('l', 'mm', 'a4');
+            
+            doc.text("DATA PENDUDUK RAMBATAN WETAN", 14, 15);
+            
+            const headers = [["NO", "NAMA", "TGL LAHIR", "NO SK", "TAHUN SK", "ALAMAT", "NO HP"]];
+            const data = pendudukData.map(item => [
+                item.no, item.nama, item.tgl, item.sk, item.tahun, item.alamat, item.hp
             ]);
 
             doc.autoTable({
-
-                head: [['No', 'Nama', 'Wilayah', 'Rekening', 'Alamat', 'No HP']],
-
-                body: tableData,
-
-                startY: 30,
-
+                head: headers,
+                body: data,
+                startY: 20,
                 theme: 'grid',
-
-                styles: { fontSize: 8 },
-
-                headStyles: { fillColor: [30, 64, 175] }
-
+                styles: { fontSize: 8 }
             });
 
-            doc.save("Data_Warga_Rambatan_Wetan.pdf");
-
+            doc.save("Data_Penduduk.pdf");
         }
 
+        function downloadExcel() {
+            const ws = XLSX.utils.json_to_sheet(pendudukData.map(i => ({
+                "NO": i.no,
+                "NAMA": i.nama,
+                "TANGGAL LAHIR": i.tgl,
+                "NO SK": i.sk,
+                "TAHUN SK": i.tahun,
+                "ALAMAT": i.alamat,
+                "NO HP": i.hp
+            })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Penduduk");
+            XLSX.writeFile(wb, "Data_Penduduk.xlsx");
+        }
 
-
-        // Jalankan render tabel saat pertama kali dibuka
-
-        renderTable();
-
+        function downloadWord() {
+            let html = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Data Penduduk</title></head>
+                <body>
+                    <h2 style='text-align:center'>DATA PENDUDUK RAMBATAN WETAN</h2>
+                    <table border='1' cellspacing='0' cellpadding='5' style='width:100%; border-collapse:collapse;'>
+                        <thead>
+                            <tr style='background-color:#f2f2f2'>
+                                <th>NO</th><th>NAMA</th><th>TGL LAHIR</th><th>NO SK</th><th>TAHUN SK</th><th>ALAMAT</th><th>NO HP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            pendudukData.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.no}</td><td>${item.nama}</td><td>${item.tgl}</td>
+                        <td>${item.sk}</td><td>${item.tahun}</td><td>${item.alamat}</td><td>${item.hp}</td>
+                    </tr>
+                `;
+            });
+            
+            html += "</tbody></table></body></html>";
+            
+            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "Data_Penduduk.doc";
+            link.click();
+        }
     </script>
-
 </body>
-
 </html>
