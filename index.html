@@ -5,14 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Data Penduduk Rambatan Wetan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .modal { transition: opacity 0.25s ease; }
-        @media (max-width: 640px) { .mobile-hide { display: none; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 pb-10">
@@ -21,21 +16,25 @@
         <header class="bg-white border-b sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
-                    <span class="text-xl font-bold text-blue-600 truncate">Rambatan Wetan</span>
-                    <p class="text-xs font-medium text-gray-900" id="userDisplayName">Tamu</p>
+                    <span class="text-xl font-bold text-blue-600">Rambatan Wetan</span>
                 </div>
             </div>
         </header>
 
         <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
-            <!-- Filter RT/RW -->
-            <div class="mb-6">
-                <label class="block text-sm font-semibold mb-2">Filter Wilayah:</label>
-                <select id="filterWilayah" onchange="renderTable()" class="w-full sm:w-64 p-2 border rounded-lg">
-                    <option value="Semua">Semua Wilayah</option>
-                    <optgroup label="RT" id="optRT"></optgroup>
-                    <optgroup label="RW" id="optRW"></optgroup>
-                </select>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Cari Nama:</label>
+                    <input type="text" id="searchInput" oninput="renderTable()" placeholder="Ketik nama..." class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Filter Wilayah:</label>
+                    <select id="filterWilayah" onchange="renderTable()" class="w-full p-2 border rounded-lg">
+                        <option value="Semua">Semua Wilayah</option>
+                        <optgroup label="RT" id="optRT"></optgroup>
+                        <optgroup label="RW" id="optRW"></optgroup>
+                    </select>
+                </div>
             </div>
 
             <div class="bg-white rounded-xl shadow border overflow-hidden">
@@ -43,12 +42,13 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Nama/SK</th>
-                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Wilayah</th>
-                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">HP/Aksi</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nama</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Wilayah</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Alamat</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">WhatsApp</th>
                             </tr>
                         </thead>
-                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200 text-xs sm:text-sm"></tbody>
+                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
             </div>
@@ -56,70 +56,76 @@
     </div>
 
     <script>
-        // Data diupdate sesuai PDF yang diunggah
-        let pendudukData = [
-            { nama: "RASTIMAN", wilayah: "RT 1", hp: "087887346997" },
-            { nama: "ENDI SUSANTO", wilayah: "RW 1", hp: "087862952268" },
-            { nama: "SOLEH S", wilayah: "RW 2", hp: "081321574356" },
-            { nama: "CARDAKA", wilayah: "RT 2", hp: "085966508839" },
-            { nama: "ADE IRAWAN", wilayah: "RW 3", hp: "085861718699" },
-            { nama: "HASAN", wilayah: "RT 3", hp: "085942112378" },
-            { nama: "TARKUDI", wilayah: "RT 4", hp: "085797901475" },
-            { nama: "ROSUL HADIYANTO", wilayah: "RW 4", hp: "081522793022" },
-            { nama: "ABDUROHIM", wilayah: "RW 5", hp: "082126453501" },
-            { nama: "SAKUDIN", wilayah: "RT 5", hp: "085798070713" },
-            { nama: "RATNA", wilayah: "RW 6", hp: "081904021042" },
-            { nama: "RASWADI", wilayah: "RT 6", hp: "087757240470" },
-            { nama: "CARITA", wilayah: "RT 7", hp: "083898182549" },
-            { nama: "RASUDI", wilayah: "RW 7", hp: "087852408999" },
-            { nama: "TARUDIN", wilayah: "RW 8", hp: "087757403211" },
-            { nama: "E. KUSNADI", wilayah: "RT 8", hp: "087836134115" },
-            { nama: "CASITA", wilayah: "RT 9", hp: "082119896080" },
-            { nama: "TADI", wilayah: "RT 10", hp: "081313643082" },
-            { nama: "TADI", wilayah: "RT 11", hp: "085724304717" },
-            { nama: "SURYADI", wilayah: "RT 12", hp: "081818473784" },
-            { nama: "NONO KARSONO", wilayah: "RT 13", hp: "08977114793" },
-            { nama: "ABDUL KHOLIL", wilayah: "RT 14", hp: "0895326253275" },
-            { nama: "NASAEDI", wilayah: "RT 15", hp: "085221908019" },
-            { nama: "DASUKI", wilayah: "RT 16", hp: "08989707470" },
-            { nama: "RIYANTO", wilayah: "RT 17", hp: "081219856798" },
-            { nama: "KADNAWI", wilayah: "RT 18", hp: "081339714263" },
-            { nama: "NONO", wilayah: "RT 19", hp: "0895403035413" },
-            { nama: "TADI", wilayah: "RT 20", hp: "082310371718" },
-            { nama: "TAPING", wilayah: "RT 21", hp: "087858112367" },
-            { nama: "WARJO", wilayah: "RT 22", hp: "087878289658" },
-            { nama: "DULANI", wilayah: "RT 23", hp: "08224355146" },
-            { nama: "CASWADI", wilayah: "RT 24", hp: "0895428568880" },
-            { nama: "SUKI", wilayah: "RT 25", hp: "087847474203" },
-            { nama: "TARMIN", wilayah: "RT 26", hp: "08978391418" },
-            { nama: "WARNITA", wilayah: "RT 27", hp: "082128824668" },
-            { nama: "SANUSI", wilayah: "RT 28", hp: "087825250221" },
-            { nama: "SARBINI", wilayah: "RT 29", hp: "085134395331" },
-            { nama: "SARNIJAH", wilayah: "RT 30", hp: "087817133110" }
+        const pendudukData = [
+            { nama: "RASTIMAN", wilayah: "RT 1", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "087887346997" },
+            { nama: "ENDI SUSANTO", wilayah: "RW 1", alamat: "Desa Rambatan Wetan Blok A", hp: "087862952268" },
+            { nama: "SOLEH S", wilayah: "RW 2", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "081321574356" },
+            { nama: "CARDAKA", wilayah: "RT 2", alamat: "Desa Rambatan Wetan Blok A", hp: "085966508839" },
+            { nama: "ADE IRAWAN", wilayah: "RW 3", alamat: "Rambatan wetan blok B", hp: "085861718699" },
+            { nama: "HASAN", wilayah: "RT 3", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "085942112378" },
+            { nama: "TARKUDI", wilayah: "RT 4", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "085797901475" },
+            { nama: "ROSUL HADIYANTO", wilayah: "RW 4", alamat: "Desa Rambatan Wetan Blok B", hp: "081522793022" },
+            { nama: "ABDUROHIM", wilayah: "RW 5", alamat: "Desa Rambatan Wetan, Balong Blok C", hp: "082126453501" },
+            { nama: "SAKUDIN", wilayah: "RT 5", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "085798070713" },
+            { nama: "RATNA", wilayah: "RW 6", alamat: "Desa Rambatan Wetan, Panggang Blok C", hp: "081904021042" },
+            { nama: "RASWADI", wilayah: "RT 6", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "087757240470" },
+            { nama: "CARITA", wilayah: "RT 7", alamat: "Desa Rambatan Wetan, Barat Blok A", hp: "083898182549" },
+            { nama: "RASUDI", wilayah: "RW 7", alamat: "Desa Rambatan Wetan, Blok C", hp: "087852408999" },
+            { nama: "TARUDIN", wilayah: "RW 8", alamat: "Desa Rambatan Wetan, Pecuk Blok B", hp: "087757403211" },
+            { nama: "E. KUSNADI", wilayah: "RT 8", alamat: "Desa Rambatan Wetan Blok A", hp: "087836134115" },
+            { nama: "CASITA", wilayah: "RT 9", alamat: "Desa Rambatan Wetan, Wanapraya Blok B", hp: "082119896080" },
+            { nama: "TADI", wilayah: "RT 10", alamat: "Desa Rambatan Wetan, Blok B", hp: "081313643082" },
+            { nama: "TADI", wilayah: "RT 11", alamat: "Desa Rambatan Wetan, Wanapraya Blok B", hp: "085724304717" },
+            { nama: "SURYADI", wilayah: "RT 12", alamat: "Desa Rambatan Wetan, Wanapraya Blok B", hp: "081818473784" },
+            { nama: "NONO KARSONO", wilayah: "RT 13", alamat: "Desa Rambatan Wetan, Blok B", hp: "08977114793" },
+            { nama: "ABDUL KHOLIL", wilayah: "RT 14", alamat: "Desa Rambatan Wetan Blok B", hp: "0895326253275" },
+            { nama: "NASAEDI", wilayah: "RT 15", alamat: "Desa Rambatan Wetan, Blok B", hp: "085221908019" },
+            { nama: "DASUKI", wilayah: "RT 16", alamat: "Desa Rambatan Wetan, Balong Blok C", hp: "08989707470" },
+            { nama: "RIYANTO", wilayah: "RT 17", alamat: "Desa Rambatan Wetan, Blok C", hp: "081219856798" },
+            { nama: "KADNAWI", wilayah: "RT 18", alamat: "Rambatan Wetan Blok C", hp: "081339714263" },
+            { nama: "NONO", wilayah: "RT 19", alamat: "Desa Rambatan Wetan, Blok C", hp: "0895403035413" },
+            { nama: "TADI", wilayah: "RT 20", alamat: "Desa Rambatan Wetan, Loa Blok C", hp: "082310371718" },
+            { nama: "TAPING", wilayah: "RT 21", alamat: "Desa Rambatan Wetan, Loa Blok C", hp: "087858112367" },
+            { nama: "WARJO", wilayah: "RT 22", alamat: "Desa Rambatan Wetan, Panggang Blok C", hp: "087878289658" },
+            { nama: "DULANI", wilayah: "RT 23", alamat: "Desa Rambatan Wetan, Blok C", hp: "08224355146" },
+            { nama: "CASWADI", wilayah: "RT 24", alamat: "Desa Rambatan Wetan, Karang Baru Blok C", hp: "0895428568880" },
+            { nama: "SUKI", wilayah: "RT 25", alamat: "Desa Rambatan Wetan, Karang Malang Blok C", hp: "087847474203" },
+            { nama: "TARMIN", wilayah: "RT 26", alamat: "Desa Rambatan Wetan Blok C", hp: "08978391418" },
+            { nama: "WARNITA", wilayah: "RT 27", alamat: "Desa Rambatan Wetan, Karang Malang, Blok C", hp: "082128824668" },
+            { nama: "SANUSI", wilayah: "RT 28", alamat: "Desa Rambatan Wetan, Jl. Kampungan Blok D", hp: "087825250221" },
+            { nama: "SARBINI", wilayah: "RT 29", alamat: "Desa Rambatan Wetan, Pecuk, Blok D", hp: "085134395331" },
+            { nama: "SARNIJAH", wilayah: "RT 30", alamat: "Desa Rambatan Wetan Blok D", hp: "087817133110" }
         ];
 
         function initFilter() {
             const rts = [...new Set(pendudukData.filter(d => d.wilayah.startsWith('RT')).map(d => d.wilayah))].sort((a,b) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]));
             const rws = [...new Set(pendudukData.filter(d => d.wilayah.startsWith('RW')).map(d => d.wilayah))].sort((a,b) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]));
-            
             rts.forEach(rt => document.getElementById('optRT').innerHTML += `<option value="${rt}">${rt}</option>`);
             rws.forEach(rw => document.getElementById('optRW').innerHTML += `<option value="${rw}">${rw}</option>`);
         }
 
         function renderTable() {
-            const filter = document.getElementById('filterWilayah').value;
+            const filterWilayah = document.getElementById('filterWilayah').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const tbody = document.getElementById('dataTableBody');
             tbody.innerHTML = '';
             
-            const filtered = filter === "Semua" ? pendudukData : pendudukData.filter(d => d.wilayah === filter);
+            const filtered = pendudukData.filter(d => {
+                const matchWilayah = (filterWilayah === "Semua" || d.wilayah === filterWilayah);
+                const matchNama = d.nama.toLowerCase().includes(searchTerm);
+                return matchWilayah && matchNama;
+            });
             
             filtered.forEach(item => {
                 tbody.innerHTML += `
-                    <tr>
-                        <td class="px-4 py-3 font-medium">${item.nama}</td>
-                        <td class="px-4 py-3">${item.wilayah}</td>
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 font-semibold text-gray-900">${item.nama}</td>
+                        <td class="px-4 py-3 text-sm">${item.wilayah}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${item.alamat}</td>
                         <td class="px-4 py-3">
-                            <a href="https://wa.me/${item.hp.replace(/^0/, '62')}" target="_blank" class="text-blue-600 underline text-xs">${item.hp}</a>
+                            <a href="https://wa.me/${item.hp.replace(/^0/, '62')}" target="_blank" class="flex items-center gap-2 bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-600 transition w-fit">
+                                <span>WhatsApp</span>
+                            </a>
                         </td>
                     </tr>
                 `;
