@@ -12,11 +12,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .modal { transition: opacity 0.25s ease; }
-        /* Tampilan mobile card */
-        @media (max-width: 640px) {
-            .mobile-hide { display: none; }
-            .card-view { display: block !important; }
-        }
+        @media (max-width: 640px) { .mobile-hide { display: none; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 pb-10">
@@ -26,32 +22,29 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
                     <span class="text-xl font-bold text-blue-600 truncate">Rambatan Wetan</span>
-                    <div class="text-right">
-                        <p class="text-xs font-medium text-gray-900" id="userDisplayName">Tamu</p>
-                    </div>
+                    <p class="text-xs font-medium text-gray-900" id="userDisplayName">Tamu</p>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
-            <div class="mb-6 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 justify-center sm:justify-start">
-                <button onclick="downloadPDF()" class="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700">PDF</button>
-                <button onclick="downloadExcel()" class="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700">Excel</button>
-                <button onclick="downloadWord()" class="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700">Word</button>
-                <div id="adminActions" class="hidden col-span-2 sm:col-span-1">
-                    <button onclick="openModal()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700">+ Tambah Data</button>
-                </div>
+        <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
+            <!-- Filter RT/RW -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-2">Filter Wilayah:</label>
+                <select id="filterWilayah" onchange="renderTable()" class="w-full sm:w-64 p-2 border rounded-lg">
+                    <option value="Semua">Semua Wilayah</option>
+                    <optgroup label="RT" id="optRT"></optgroup>
+                    <optgroup label="RW" id="optRW"></optgroup>
+                </select>
             </div>
 
-            <!-- Wrapper Tabel Responsif -->
             <div class="bg-white rounded-xl shadow border overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Nama/SK</th>
-                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase mobile-hide">Tgl Lahir</th>
-                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase mobile-hide">Tahun</th>
+                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Wilayah</th>
                                 <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">HP/Aksi</th>
                             </tr>
                         </thead>
@@ -59,120 +52,82 @@
                     </table>
                 </div>
             </div>
-
-            <div id="loginScreen" class="mt-8 bg-white p-6 rounded-2xl border max-w-sm mx-auto shadow-sm">
-                <h2 class="text-lg font-bold text-gray-800 mb-4 text-center">Login Admin</h2>
-                <form id="loginForm" class="space-y-3">
-                    <input type="text" id="username" placeholder="Username" class="w-full px-4 py-3 border rounded-lg text-sm" required>
-                    <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border rounded-lg text-sm" required>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-sm">Masuk</button>
-                </form>
-                <div id="loginError" class="hidden mt-3 text-center text-red-500 text-xs">Login Gagal!</div>
-            </div>
         </main>
     </div>
 
-    <div id="dataModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50 p-4">
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-full max-w-lg rounded-xl shadow-lg z-50 p-6 overflow-y-auto max-h-[90vh]">
-            <p class="text-lg font-bold mb-4">Form Data</p>
-            <form id="pendudukForm" class="space-y-3">
-                <input type="text" id="formNama" placeholder="Nama" class="w-full p-3 border rounded-lg" required>
-                <input type="text" id="formTgl" placeholder="Tgl Lahir" class="w-full p-3 border rounded-lg" required>
-                <input type="text" id="formSK" placeholder="No SK" class="w-full p-3 border rounded-lg" required>
-                <input type="number" id="formTahun" placeholder="Tahun SK" class="w-full p-3 border rounded-lg" required>
-                <textarea id="formAlamat" placeholder="Alamat" class="w-full p-3 border rounded-lg"></textarea>
-                <input type="text" id="formHP" placeholder="No HP" class="w-full p-3 border rounded-lg" required>
-                <div class="flex gap-2">
-                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 py-3 rounded-lg">Batal</button>
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
+        // Data diupdate sesuai PDF yang diunggah
         let pendudukData = [
-            { no: 1, nama: "ENDI SUSANTO", tgl: "08-02-1964", sk: "045", tahun: 2026, alamat: "Rambatan Wetan", hp: "087862952268" },
-            { no: 2, nama: "SOLEH S", tgl: "15-04-1971", sk: "044", tahun: 2026, alamat: "Rambatan Wetan", hp: "081321574356" },
-            { no: 3, nama: "ADE IRAWAN", tgl: "26-10-1986", sk: "028", tahun: 2026, alamat: "Rambatan Wetan", hp: "085861718699" },
-            { no: 4, nama: "ROSUL HADIYANTO", tgl: "22-08-1975", sk: "029", tahun: 2026, alamat: "Rambatan Wetan", hp: "081522793022" },
-            { no: 5, nama: "ABDUROHIM", tgl: "09-11-1984", sk: "030", tahun: 2026, alamat: "Rambatan Wetan", hp: "082126453501" },
-            { no: 6, nama: "RATNA", tgl: "01-03-1977", sk: "027", tahun: 2026, alamat: "Rambatan Wetan", hp: "081904021042" },
-            { no: 7, nama: "RASUDI", tgl: "11-08-1973", sk: "026", tahun: 2026, alamat: "Rambatan Wetan", hp: "087852408999" },
-            { no: 8, nama: "TARUDIN", tgl: "12-09-1961", sk: "043", tahun: 2026, alamat: "Rambatan Wetan", hp: "087757403211" },
-            { no: 9, nama: "RASTIMAN", tgl: "03-04-1979", sk: "041", tahun: 2026, alamat: "Rambatan Wetan", hp: "087887346997" },
-            { no: 10, nama: "CARDAKA", tgl: "04-05-1984", sk: "047", tahun: 2026, alamat: "Rambatan Wetan", hp: "085966508839" },
-            { no: 11, nama: "HASAN", tgl: "20-12-1972", sk: "042", tahun: 2026, alamat: "Rambatan Wetan", hp: "085942112378" },
-            { no: 12, nama: "TARKUDI", tgl: "15-02-1971", sk: "036", tahun: 2026, alamat: "Rambatan Wetan", hp: "085797901475" },
-            { no: 13, nama: "SAKUDIN", tgl: "04-03-1980", sk: "035", tahun: 2026, alamat: "Rambatan Wetan", hp: "085798070713" },
-            { no: 14, nama: "RASWADI", tgl: "15-01-1971", sk: "038", tahun: 2026, alamat: "Rambatan Wetan", hp: "087757240470" },
-            { no: 15, nama: "CARITA", tgl: "10-06-1971", sk: "034", tahun: 2026, alamat: "Rambatan Wetan", hp: "083898182549" },
-            { no: 16, nama: "E. KUSNADI", tgl: "03-07-1977", sk: "037", tahun: 2026, alamat: "Rambatan Wetan", hp: "087836134115" },
-            { no: 17, nama: "CASITA", tgl: "10-11-1970", sk: "014", tahun: 2026, alamat: "Rambatan Wetan", hp: "082119896080" },
-            { no: 18, nama: "TADI", tgl: "22-04-1972", sk: "012", tahun: 2026, alamat: "Rambatan Wetan", hp: "081313643082" },
-            { no: 19, nama: "TADI", tgl: "12-08-1982", sk: "013", tahun: 2026, alamat: "Rambatan Wetan", hp: "085724304717" },
-            { no: 20, nama: "SURYADI", tgl: "10-03-1979", sk: "031", tahun: 2026, alamat: "Rambatan Wetan", hp: "081818473784" },
-            { no: 21, nama: "NONO KARSONO", tgl: "24-11-1985", sk: "009", tahun: 2026, alamat: "Rambatan Wetan", hp: "08977114793" },
-            { no: 22, nama: "ABDUL KHOLIL", tgl: "20-03-1981", sk: "011", tahun: 2026, alamat: "Rambatan Wetan", hp: "0895326253275" },
-            { no: 23, nama: "NASAEDI", tgl: "15-02-1985", sk: "010", tahun: 2026, alamat: "Rambatan Wetan", hp: "085221908019" },
-            { no: 24, nama: "DASUKI", tgl: "04-03-1979", sk: "022", tahun: 2026, alamat: "Rambatan Wetan", hp: "08989707470" },
-            { no: 25, nama: "RIYANTO", tgl: "08-08-1994", sk: "021", tahun: 2026, alamat: "Rambatan Wetan", hp: "081219856798" },
-            { no: 26, nama: "KADNAWI", tgl: "06-12-1976", sk: "023", tahun: 2026, alamat: "Rambatan Wetan", hp: "081339714263" },
-            { no: 27, nama: "NONO", tgl: "31-12-1959", sk: "024", tahun: 2026, alamat: "Rambatan Wetan", hp: "0895403035413" },
-            { no: 28, nama: "TADI", tgl: "18-11-1979", sk: "016", tahun: 2026, alamat: "Rambatan Wetan", hp: "082310371718" },
-            { no: 29, nama: "TAPING", tgl: "01-02-1973", sk: "025", tahun: 2026, alamat: "Rambatan Wetan", hp: "087858112367" },
-            { no: 30, nama: "WARJO", tgl: "06-12-1976", sk: "017", tahun: 2026, alamat: "Rambatan Wetan", hp: "087878289658" },
-            { no: 31, nama: "DULANI", tgl: "21-11-1985", sk: "015", tahun: 2026, alamat: "Rambatan Wetan", hp: "08224355146" },
-            { no: 32, nama: "CASWADI", tgl: "19-05-1979", sk: "018", tahun: 2026, alamat: "Rambatan Wetan", hp: "0895428568880" },
-            { no: 33, nama: "SUKI", tgl: "28-08-1974", sk: "019", tahun: 2026, alamat: "Rambatan Wetan", hp: "087847474203" },
-            { no: 34, nama: "TARMIN", tgl: "10-02-1983", sk: "046", tahun: 2026, alamat: "Rambatan Wetan", hp: "08978391418" },
-            { no: 35, nama: "WARNITA", tgl: "23-06-1978", sk: "020", tahun: 2026, alamat: "Rambatan Wetan", hp: "082128824668" },
-            { no: 36, nama: "SANUSI", tgl: "03-05-1967", sk: "039", tahun: 2026, alamat: "Rambatan Wetan", hp: "087825250221" },
-            { no: 37, nama: "SARBINI", tgl: "18-03-1960", sk: "040", tahun: 2026, alamat: "Rambatan Wetan", hp: "085134395331" },
-            { no: 38, nama: "SARNIJAH", tgl: "20-08-1973", sk: "032", tahun: 2026, alamat: "Rambatan Wetan", hp: "087817133110" }
+            { nama: "RASTIMAN", wilayah: "RT 1", hp: "087887346997" },
+            { nama: "ENDI SUSANTO", wilayah: "RW 1", hp: "087862952268" },
+            { nama: "SOLEH S", wilayah: "RW 2", hp: "081321574356" },
+            { nama: "CARDAKA", wilayah: "RT 2", hp: "085966508839" },
+            { nama: "ADE IRAWAN", wilayah: "RW 3", hp: "085861718699" },
+            { nama: "HASAN", wilayah: "RT 3", hp: "085942112378" },
+            { nama: "TARKUDI", wilayah: "RT 4", hp: "085797901475" },
+            { nama: "ROSUL HADIYANTO", wilayah: "RW 4", hp: "081522793022" },
+            { nama: "ABDUROHIM", wilayah: "RW 5", hp: "082126453501" },
+            { nama: "SAKUDIN", wilayah: "RT 5", hp: "085798070713" },
+            { nama: "RATNA", wilayah: "RW 6", hp: "081904021042" },
+            { nama: "RASWADI", wilayah: "RT 6", hp: "087757240470" },
+            { nama: "CARITA", wilayah: "RT 7", hp: "083898182549" },
+            { nama: "RASUDI", wilayah: "RW 7", hp: "087852408999" },
+            { nama: "TARUDIN", wilayah: "RW 8", hp: "087757403211" },
+            { nama: "E. KUSNADI", wilayah: "RT 8", hp: "087836134115" },
+            { nama: "CASITA", wilayah: "RT 9", hp: "082119896080" },
+            { nama: "TADI", wilayah: "RT 10", hp: "081313643082" },
+            { nama: "TADI", wilayah: "RT 11", hp: "085724304717" },
+            { nama: "SURYADI", wilayah: "RT 12", hp: "081818473784" },
+            { nama: "NONO KARSONO", wilayah: "RT 13", hp: "08977114793" },
+            { nama: "ABDUL KHOLIL", wilayah: "RT 14", hp: "0895326253275" },
+            { nama: "NASAEDI", wilayah: "RT 15", hp: "085221908019" },
+            { nama: "DASUKI", wilayah: "RT 16", hp: "08989707470" },
+            { nama: "RIYANTO", wilayah: "RT 17", hp: "081219856798" },
+            { nama: "KADNAWI", wilayah: "RT 18", hp: "081339714263" },
+            { nama: "NONO", wilayah: "RT 19", hp: "0895403035413" },
+            { nama: "TADI", wilayah: "RT 20", hp: "082310371718" },
+            { nama: "TAPING", wilayah: "RT 21", hp: "087858112367" },
+            { nama: "WARJO", wilayah: "RT 22", hp: "087878289658" },
+            { nama: "DULANI", wilayah: "RT 23", hp: "08224355146" },
+            { nama: "CASWADI", wilayah: "RT 24", hp: "0895428568880" },
+            { nama: "SUKI", wilayah: "RT 25", hp: "087847474203" },
+            { nama: "TARMIN", wilayah: "RT 26", hp: "08978391418" },
+            { nama: "WARNITA", wilayah: "RT 27", hp: "082128824668" },
+            { nama: "SANUSI", wilayah: "RT 28", hp: "087825250221" },
+            { nama: "SARBINI", wilayah: "RT 29", hp: "085134395331" },
+            { nama: "SARNIJAH", wilayah: "RT 30", hp: "087817133110" }
         ];
 
-        let currentUser = { username: "Tamu", role: "Viewer" };
+        function initFilter() {
+            const rts = [...new Set(pendudukData.filter(d => d.wilayah.startsWith('RT')).map(d => d.wilayah))].sort((a,b) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]));
+            const rws = [...new Set(pendudukData.filter(d => d.wilayah.startsWith('RW')).map(d => d.wilayah))].sort((a,b) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]));
+            
+            rts.forEach(rt => document.getElementById('optRT').innerHTML += `<option value="${rt}">${rt}</option>`);
+            rws.forEach(rw => document.getElementById('optRW').innerHTML += `<option value="${rw}">${rw}</option>`);
+        }
 
         function renderTable() {
+            const filter = document.getElementById('filterWilayah').value;
             const tbody = document.getElementById('dataTableBody');
             tbody.innerHTML = '';
-            pendudukData.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-3 py-3 font-medium text-gray-900">${item.nama}<br><span class="text-[10px] text-gray-500">SK: ${item.sk}</span></td>
-                    <td class="px-3 py-3 mobile-hide">${item.tgl}</td>
-                    <td class="px-3 py-3 mobile-hide">${item.tahun}</td>
-                    <td class="px-3 py-3">
-                        <span class="block text-[10px] text-gray-600 mb-1">${item.hp}</span>
-                        ${currentUser.role === 'Admin' ? `<button onclick="openModal(${index})" class="text-indigo-600 font-bold">Edit</button>` : ''}
-                    </td>
+            
+            const filtered = filter === "Semua" ? pendudukData : pendudukData.filter(d => d.wilayah === filter);
+            
+            filtered.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="px-4 py-3 font-medium">${item.nama}</td>
+                        <td class="px-4 py-3">${item.wilayah}</td>
+                        <td class="px-4 py-3">
+                            <a href="https://wa.me/${item.hp.replace(/^0/, '62')}" target="_blank" class="text-blue-600 underline text-xs">${item.hp}</a>
+                        </td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
         }
 
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            if(document.getElementById('username').value === "Ameth03" && document.getElementById('password').value === "Ramwet03") {
-                currentUser = { username: "Ameth03", role: "Admin" };
-                document.getElementById('userDisplayName').innerText = "Admin: Ameth03";
-                document.getElementById('adminActions').classList.remove('hidden');
-                document.getElementById('loginScreen').classList.add('hidden');
-                renderTable();
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
-            }
-        });
-
-        function openModal(idx = null) { if(currentUser.role === 'Admin') document.getElementById('dataModal').classList.remove('opacity-0', 'pointer-events-none'); }
-        function closeModal() { document.getElementById('dataModal').classList.add('opacity-0', 'pointer-events-none'); }
+        initFilter();
         renderTable();
-
-        function downloadPDF() { alert("Fitur PDF aktif"); }
-        function downloadExcel() { alert("Fitur Excel aktif"); }
-        function downloadWord() { alert("Fitur Word aktif"); }
     </script>
 </body>
 </html>
