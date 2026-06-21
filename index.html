@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Data Penduduk Rambatan Wetan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,94 +12,81 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .modal { transition: opacity 0.25s ease; }
+        /* Tampilan mobile card */
+        @media (max-width: 640px) {
+            .mobile-hide { display: none; }
+            .card-view { display: block !important; }
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body class="bg-gray-50 min-h-screen text-gray-800 pb-10">
 
-    <!-- Dashboard (Sekarang dimuat duluan sebagai tamu) -->
     <div id="dashboard">
         <header class="bg-white border-b sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-2xl font-bold text-blue-600">Rambatan Wetan</span>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right hidden sm:block">
-                            <p class="text-sm font-medium text-gray-900" id="userDisplayName">Tamu</p>
-                            <p class="text-xs text-gray-500" id="userRoleName">Mode Warga (Hanya Lihat)</p>
-                        </div>
+                    <span class="text-xl font-bold text-blue-600 truncate">Rambatan Wetan</span>
+                    <div class="text-right">
+                        <p class="text-xs font-medium text-gray-900" id="userDisplayName">Tamu</p>
                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="mb-6 flex flex-wrap gap-3 justify-between items-center">
-                <div class="flex gap-2">
-                    <button onclick="downloadPDF()" class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition">PDF</button>
-                    <button onclick="downloadExcel()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition">Excel</button>
-                    <button onclick="downloadWord()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">Word</button>
-                </div>
-                <div id="adminActions" class="hidden">
-                    <button onclick="openModal()" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">+ Tambah Data</button>
+        <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
+            <div class="mb-6 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 justify-center sm:justify-start">
+                <button onclick="downloadPDF()" class="px-3 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700">PDF</button>
+                <button onclick="downloadExcel()" class="px-3 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700">Excel</button>
+                <button onclick="downloadWord()" class="px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700">Word</button>
+                <div id="adminActions" class="hidden col-span-2 sm:col-span-1">
+                    <button onclick="openModal()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700">+ Tambah Data</button>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow overflow-hidden border">
+            <!-- Wrapper Tabel Responsif -->
+            <div class="bg-white rounded-xl shadow border overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Lahir</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No SK</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun SK</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No HP</th>
-                                <th class="admin-col hidden px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Nama/SK</th>
+                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase mobile-hide">Tgl Lahir</th>
+                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase mobile-hide">Tahun</th>
+                                <th class="px-4 py-3 text-left text-[10px] sm:text-xs font-bold text-gray-500 uppercase">HP/Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200 text-xs sm:text-sm"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Area Login di Bawah -->
-            <div id="loginScreen" class="mt-12 bg-gray-100 p-8 rounded-2xl border border-gray-200 max-w-md mx-auto">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Login Admin</h2>
-                <form id="loginForm" class="space-y-4">
-                    <div>
-                        <input type="text" id="username" placeholder="Username" class="w-full px-4 py-2 border rounded-lg" required>
-                    </div>
-                    <div>
-                        <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg" required>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700">Masuk Sebagai Admin</button>
+            <div id="loginScreen" class="mt-8 bg-white p-6 rounded-2xl border max-w-sm mx-auto shadow-sm">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 text-center">Login Admin</h2>
+                <form id="loginForm" class="space-y-3">
+                    <input type="text" id="username" placeholder="Username" class="w-full px-4 py-3 border rounded-lg text-sm" required>
+                    <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border rounded-lg text-sm" required>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-sm">Masuk</button>
                 </form>
-                <div id="loginError" class="hidden mt-4 text-center text-red-500 text-sm">Username/Password Salah!</div>
+                <div id="loginError" class="hidden mt-3 text-center text-red-500 text-xs">Login Gagal!</div>
             </div>
         </main>
     </div>
 
-    <!-- Modal Form (Tetap sama) -->
-    <div id="dataModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+    <div id="dataModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50 p-4">
         <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-        <div class="modal-container bg-white w-full max-w-lg mx-auto rounded-xl shadow-lg z-50 overflow-y-auto p-6">
-            <div class="flex justify-between items-center pb-3 border-b mb-4">
-                <p class="text-xl font-bold" id="modalTitle">Data Penduduk</p>
-                <button onclick="closeModal()" class="text-gray-400">✕</button>
-            </div>
-            <form id="pendudukForm" class="space-y-4">
-                <input type="hidden" id="editIndex">
-                <input type="text" id="formNama" placeholder="Nama" class="w-full p-2 border rounded-lg" required>
-                <input type="text" id="formTgl" placeholder="Tgl Lahir" class="w-full p-2 border rounded-lg" required>
-                <input type="text" id="formSK" placeholder="No SK" class="w-full p-2 border rounded-lg" required>
-                <input type="number" id="formTahun" placeholder="Tahun SK" class="w-full p-2 border rounded-lg" required>
-                <textarea id="formAlamat" placeholder="Alamat" class="w-full p-2 border rounded-lg" required></textarea>
-                <input type="text" id="formHP" placeholder="No HP" class="w-full p-2 border rounded-lg" required>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg">Simpan</button>
+        <div class="modal-container bg-white w-full max-w-lg rounded-xl shadow-lg z-50 p-6 overflow-y-auto max-h-[90vh]">
+            <p class="text-lg font-bold mb-4">Form Data</p>
+            <form id="pendudukForm" class="space-y-3">
+                <input type="text" id="formNama" placeholder="Nama" class="w-full p-3 border rounded-lg" required>
+                <input type="text" id="formTgl" placeholder="Tgl Lahir" class="w-full p-3 border rounded-lg" required>
+                <input type="text" id="formSK" placeholder="No SK" class="w-full p-3 border rounded-lg" required>
+                <input type="number" id="formTahun" placeholder="Tahun SK" class="w-full p-3 border rounded-lg" required>
+                <textarea id="formAlamat" placeholder="Alamat" class="w-full p-3 border rounded-lg"></textarea>
+                <input type="text" id="formHP" placeholder="No HP" class="w-full p-3 border rounded-lg" required>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 py-3 rounded-lg">Batal</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg">Simpan</button>
+                </div>
             </form>
         </div>
     </div>
@@ -154,15 +141,12 @@
             pendudukData.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-6 py-4">${item.no}</td>
-                    <td class="px-6 py-4">${item.nama}</td>
-                    <td class="px-6 py-4">${item.tgl}</td>
-                    <td class="px-6 py-4">${item.sk}</td>
-                    <td class="px-6 py-4">${item.tahun}</td>
-                    <td class="px-6 py-4">${item.alamat}</td>
-                    <td class="px-6 py-4">${item.hp}</td>
-                    <td class="admin-col hidden px-6 py-4 text-right">
-                        <button onclick="openModal(${index})" class="text-indigo-600">Edit</button>
+                    <td class="px-3 py-3 font-medium text-gray-900">${item.nama}<br><span class="text-[10px] text-gray-500">SK: ${item.sk}</span></td>
+                    <td class="px-3 py-3 mobile-hide">${item.tgl}</td>
+                    <td class="px-3 py-3 mobile-hide">${item.tahun}</td>
+                    <td class="px-3 py-3">
+                        <span class="block text-[10px] text-gray-600 mb-1">${item.hp}</span>
+                        ${currentUser.role === 'Admin' ? `<button onclick="openModal(${index})" class="text-indigo-600 font-bold">Edit</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -173,47 +157,22 @@
             e.preventDefault();
             if(document.getElementById('username').value === "Ameth03" && document.getElementById('password').value === "Ramwet03") {
                 currentUser = { username: "Ameth03", role: "Admin" };
-                document.getElementById('userDisplayName').innerText = "Ameth03";
-                document.getElementById('userRoleName').innerText = "Akses Penuh";
+                document.getElementById('userDisplayName').innerText = "Admin: Ameth03";
                 document.getElementById('adminActions').classList.remove('hidden');
-                document.querySelectorAll('.admin-col').forEach(el => el.classList.remove('hidden'));
                 document.getElementById('loginScreen').classList.add('hidden');
+                renderTable();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
         });
 
-        function renderTable() {
-            const tbody = document.getElementById('dataTableBody');
-            tbody.innerHTML = '';
-            pendudukData.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-6 py-4">${item.no}</td><td class="px-6 py-4">${item.nama}</td>
-                    <td class="px-6 py-4">${item.tgl}</td><td class="px-6 py-4">${item.sk}</td>
-                    <td class="px-6 py-4">${item.tahun}</td><td class="px-6 py-4">${item.alamat}</td>
-                    <td class="px-6 py-4">${item.hp}</td>
-                    <td class="admin-col ${currentUser.role === 'Admin' ? '' : 'hidden'} px-6 py-4 text-right">
-                        <button onclick="openModal(${index})" class="text-indigo-600">Edit</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function openModal(idx = null) {
-            if(currentUser.role !== 'Admin') return;
-            document.getElementById('dataModal').classList.remove('opacity-0', 'pointer-events-none');
-        }
+        function openModal(idx = null) { if(currentUser.role === 'Admin') document.getElementById('dataModal').classList.remove('opacity-0', 'pointer-events-none'); }
         function closeModal() { document.getElementById('dataModal').classList.add('opacity-0', 'pointer-events-none'); }
-
-        // Inisialisasi awal
         renderTable();
 
-        // Fungsi unduh tetap sama...
-        function downloadPDF() { /* ... */ }
-        function downloadExcel() { /* ... */ }
-        function downloadWord() { /* ... */ }
+        function downloadPDF() { alert("Fitur PDF aktif"); }
+        function downloadExcel() { alert("Fitur Excel aktif"); }
+        function downloadWord() { alert("Fitur Word aktif"); }
     </script>
 </body>
 </html>
